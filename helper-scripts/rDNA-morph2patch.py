@@ -11,6 +11,7 @@ def replicate_fasta(input_file, output_file, copies):
         sequence = f.readline().strip()
 
     # print input params to shell
+    print("\n")
     print(f"Input FASTA file: {input_file}")
     print(f"Output FASTA file: {output_file}")
     print(f"Number of copies: {copies}")
@@ -26,6 +27,8 @@ def replicate_fasta(input_file, output_file, copies):
 
     # print length of output sequence - sanity check
     print(f"Length of output sequence (stripped): {len(repeated_sequence)}")
+    print("\n")
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Replicate a FASTA sequence a given number of times.")
