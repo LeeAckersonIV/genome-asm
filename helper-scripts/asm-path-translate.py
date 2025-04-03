@@ -1,7 +1,7 @@
 # This script is designed to adjust the verkko assembly.paths.tsv +/- syntax to the patch >/< syntax. E.x. utig4-1479-,utig4-1478- -> <utig4-1479<utig4-1478
 
-# Call the script (asm-path-fixer.py), followed by a string of the +/- path to translate.
-## $ asm-path-fixer.py utig4-1479-,utig4-1478-
+# Call the script (asm-path-translate.py), followed by a string of the +/- path to translate.
+## $ asm-path-translate.py utig4-1479-,utig4-1478-
 ## > <utig4-1479<utig4-1478
 
 import sys # allows command line args
