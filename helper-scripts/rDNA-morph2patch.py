@@ -20,10 +20,9 @@ def replicate_fasta(input_file, output_file, copies):
     # Repeat sequence `copies` times
     repeated_sequence = sequence * copies
 
-    # write to output file
+    # write to output file as exactly two lines
     with open(output_file, "w") as f:
-        f.write(header + "\n")
-        f.write(repeated_sequence)
+        f.write(f"{header}\n{repeated_sequence}\n")
 
     # print length of output sequence - sanity check
     print(f"Length of output sequence (stripped): {len(repeated_sequence)}")
@@ -38,4 +37,3 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     replicate_fasta(args.input_fasta, args.output_fasta, args.copies)
-
