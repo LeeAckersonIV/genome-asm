@@ -40,7 +40,6 @@ while (<GAF>) {
 	# get utig list
 	my @utigs = split /[<>]/, $line[1];
 	$junk = shift(@utigs);
-	
 	# get other information on the line
 	for (my $i = 0; $i <= $#utigs; $i++) {
 		if (defined($pathName{$utigs[$i]})) {
@@ -77,6 +76,10 @@ while (<PATCH>) {
   chomp($_);
 
 	my @line = split /\t/, $_;
+	
+	# newly added
+	$lineOriginal = $line[1];
+	$line[1] =~ s/\[[^\]]*\]//g;
 		
 	my @lineIDs = split /;/, $line[0];
 	my %utigs2process = ();
@@ -149,7 +152,7 @@ while (<PATCH>) {
 	}
 	
 	# add the line
-	$gafLine{$thisPatchID} = $thisPatchID."\t".$line[1]."\t".$lineHapmer{$thisPatchID};
+	$gafLine{$thisPatchID} = $thisPatchID."\t".$lineOriginal."\t".$lineHapmer{$thisPatchID};
 	
 }
 
