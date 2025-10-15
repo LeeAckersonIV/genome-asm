@@ -19,12 +19,12 @@ In addition, this repository includes detailed records of **assembled**, **detan
 ---
 
 ### 📂 Contents
-- **Helper Scripts:**
-- **HiFiasm:**
-- **Verkko:** 
-- **PigT2T:**
-- **SwineReferencePangenome:**
-- **RunminantT2T:**
+- **`helper-scripts`:**
+- **`HiFiasm`:**
+- **`Verkko`:** 
+- **`pigT2T`:**
+- **`SwineReferencePangenome`:**
+- **`RuminantT2T`:**
 
 
 
