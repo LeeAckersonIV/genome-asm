@@ -26,7 +26,9 @@
 
 ### 4. Launch genome assembly software 
 - Verkko2.2: HiFi-Duplex Trio Assembly
+	- `launch_pig_hifi-duplex_verkko2.2_trio.sh` 	
 - Verkko2.2: HiFi-Duplex HiC Assembly
+	- `launch_pig_hifi-duplex_verkko2.2_hic.sh`
 
 ### 5. Relaunch and Patch Genome Assembly
 - After all detangling and structural resolution is completed, but prior to polishing.
