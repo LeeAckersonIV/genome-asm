@@ -16,6 +16,7 @@
 - PacBio HiFi: Filtered; not used.
 - ONT Duplex: Filtered
 - ONT UL: Filtered
+	- `chopper_R10.4.1_T2T_q12_q10_q7_q5.sh` 	
 - Omni-C: No filtering
 
 ### 3. Generate hapmer / k-mer databases 
