@@ -1,6 +1,6 @@
 # 🧬 Genome Assembly: From Reads to Reference Genome  
 
-This repository contains **documentation**, **tutorials**, and **scripts** for performing **genome assembly** using both **[Verkko](https://github.com/marbl/verkko)** and **[HiFiasm](https://github.com/chhylp123/hifiasm)**.  
+This repository contains **documentation**, **tutorials**, and **scripts** for performing **genome assembly** using both **[Verkko](https://github.com/marbl/verkko)** and **[HiFiasm](https://github.com/chhylp123/hifiasm)**, as well as downstream manual curation.  
 
 In addition, this repository includes detailed records of **assembled**, **detangled**, and **polished** genomes for the following species and projects:  
 
