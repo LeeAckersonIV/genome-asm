@@ -67,6 +67,9 @@ cat chr10.hap2.fullpatch.fa | gzip -c >> ont_subset.fasta.gz
 seqtk gc ont_subset.fasta.gz |awk '{print $1}'|sort |uniq > ont_subset.id
 
 # Manually (semi-automatic with below script) edit patch files
+## DISCLAIMER: If your assembly is Hi-C based isntead of Trio, you wont have 6-rukki and should use 8-hicPipeline folder instead.
+## Additionally, instead of using 6-rukki/unitig-unrolled-unitig-unrolled-popped-unitig-normal-connected-tip.paths.gaf,
+## you would use 8-hicPipeline/rukki.paths.gaf for patching paths and relaunching verkko.
 #cd /90daydata/ruminant_t2t/Pig/assembly/verkko2.2_hifi-duplex_trio.patch1
 #perl ~/scripts/addPatch.pl --gaf manual.paths.gaf --patch HxYL-Assembly-CollatedPatches.tsv > new.paths.gaf
 #cd /90daydata/ruminant_t2t/Pig/assembly/relaunch.patch1.verkko2.2_hifi-duplex_trio
@@ -101,6 +104,9 @@ ln -s ../../unitig-popped.layout.scfmap
 ln -s ../../unitig-popped.layout
 
 # make new 6-rukki folder, link in necessary files (make sure to include label1 & label2 if phasing information supplied)
+## DISCLAIMER: If your assembly is Hi-C based isntead of Trio, you wont have 6-rukki and should use 8-hicPipeline folder instead.
+## Additionally, instead of using 6-rukki/unitig-unrolled-unitig-unrolled-popped-unitig-normal-connected-tip.paths.gaf,
+## you would use 8-hicPipeline/rukki.paths.gaf for patching paths and relaunching verkko.
 cd ..
 mkdir 6-rukki
 cd 6-rukki
