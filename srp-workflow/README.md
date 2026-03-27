@@ -8,7 +8,10 @@
 # Workflow Execution
 
 ```bash
-wget [https://github.com/LeeAckersonIV/genome-asm/archive/refs/heads/main.zip](https://github.com/LeeAckersonIV/genome-asm/archive/refs/heads/main.zip)
+# Download the repository archive
+wget https://github.com/LeeAckersonIV/genome-asm/archive/refs/heads/main.zip
+
+# Unzip only the specific workflow folder
 unzip main.zip 'genome-asm-main/srp-workflow/*'
 ```
 **Note:** Adjust the `env.bashrc` to work on your system before running workflow
