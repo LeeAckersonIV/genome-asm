@@ -25,8 +25,6 @@
 
 # Example Command Execution
 # ----------------------------------------------------------------------------------------------- #
-# chmod +x initialize.sh # if needed
-# salloc --time=4:00:00 --cpus-per-task=8 --mem=100G
 # ./initialize.sh --projectROOT ~/SRP_1 --illumina.terminal.lib LIB212039 --illumina.maternal.lib LIB212038 --illumina.paternal.lib LIB212041 --illumina.MGS.lib LIB212046 --illumina.MGD.lib LIB212044 --hifi.terminal.lib LIB212031 --hifi.maternal.lib LIB212951
 # =============================================================================================== #
 
@@ -346,6 +344,12 @@ fi
 
 # !!add support for snp chip files here similiar to ONT!!
 # ----------------------------------------------------------------------------------------------- #
+# ont fastq files [IF SUPPLIED]
+if [[ "$SNP_DIR" != "NA" ]]; then
+	echo "SNP Data supplied, pipeline not capable of utilizing yet - stay tuned!"
+else 
+    echo "SNP data was not supplied; skipping SNP symlinking."
+fi
 # ----------------------------------------------------------------------------------------------- #
 
 
@@ -382,6 +386,7 @@ RUNFASTQC="$RUNFASTQC"
 FASTQC_SOFTWARE="$FASTQC_SOFTWARE"
 MULTIQC_SOFTWARE="$MULTIQC_SOFTWARE"
 SEQKIT_SOFTWARE="$SEQKIT_SOFTWARE"
+MERYL_SOFTWARE="$MERYL_SOFTWARE"
 # ----------------------------------------------------------------------------------------------- #
 EOF
 
