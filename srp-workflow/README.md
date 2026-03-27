@@ -15,5 +15,6 @@ wget https://github.com/LeeAckersonIV/genome-asm/archive/refs/heads/main.zip
 unzip main.zip 'genome-asm-main/srp-workflow/*'
 mv ./genome-asm-main/srp-workflow .
 rm -rf main.zip genome-asm-main
+cd srp-workflow/
 ```
 **Note:** Adjust the `env.bashrc` to work on your system before running workflow
