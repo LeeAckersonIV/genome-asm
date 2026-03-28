@@ -87,6 +87,12 @@ usage() {
 
 # Set base default values and source configuration
 # ----------------------------------------------------------------------------------------------- #
+# initialize non-global variables
+ILLUM_MGS="NA"
+ILLUM_MGD="NA"
+ONT_TERM="NA"
+ONT_MAT="NA"
+
 # global variables
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$PWD"
@@ -100,18 +106,13 @@ else
 	HIFI_DIR="/mnt/gs21/scratch/huangw53/upload/USMARC_HiFi"
 	ONT_DIR="NA"
 
-	RUNFASTQC="YES"
 	ThreeGenMode="YES"
 	FASTQC_SOFTWARE="/mnt/research/qgg/software/fastqc_v0.11.5"
 	MULTIQC_SOFTWARE="/mnt/research/qgg/software/multiqc_v1.33/bin"
 	SEQKIT_SOFTWARE="/mnt/research/qgg/software/seqkit-2.13.0"
+	MERYL_SOFTWARE="/mnt/research/qgg/software/meryl-1.4.1/bin"
 fi
 
-# non-global variables
-ILLUM_MGS="NA"
-ILLUM_MGD="NA"
-ONT_TERM="NA"
-ONT_MAT="NA"
 # ----------------------------------------------------------------------------------------------- #
 
 
