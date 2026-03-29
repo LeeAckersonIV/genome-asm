@@ -32,7 +32,7 @@
 # OR, IF initialize.sh was RUN FIRST:
 
 # salloc --time=4:00:00 --cpus-per-task=8 --mem=100G
-# ./readQC.sh --projectROOT ~/scripts/SRP_1 --load.project.params YES
+# ./readQC.sh --projectROOT ../SRP_1 --load.project.params YES
 # =============================================================================================== #
 
 # Function to display help menu
@@ -284,17 +284,20 @@ done
 # ----------------------------------------------------------------------------------------------- #
 echo "Modeling K-mer distributions with GenomeScope 2.0..."
 
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate genomescope2
 
 for lib in "${KMER_LIBS[@]}"; do
     if [[ "$lib" != "NA" && -f "${MERYL_DIR}/${lib}.hist" ]]; then
 		
         echo "Processing $lib..."
         mkdir -p "${GS_OUT}/${lib}"
-		Rscript "$GENOMESCOPE2_SOFTWARE" -i "${MERYL_DIR}/${lib}.hist" -k 21 -p 2 -r 150 -o "${GS_OUT}/${lib}"
+		Rscript "$GENOMESCOPE2_SOFTWARE" -i "${MERYL_DIR}/${lib}.hist" -k 21 -p 2 -o "${GS_OUT}/${lib}"
     
 	fi
 done
 
+micromamba deactivate
 
 # 7. run Merqury Trio Plotting
 # ----------------------------------------------------------------------------------------------- #
@@ -308,21 +311,12 @@ if [[ "$ILLUM_TERM" != "NA" && "$ILLUM_MAT" != "NA" && "$ILLUM_PAT" != "NA" ]]; 
 	TERM_TRIO_DIR="${QC_OUT}/merqury_trio_terminal"
 	mkdir -p "$TERM_TRIO_DIR" && cd "$TERM_TRIO_DIR"
 
-    # 1. Generate inherited hapmers
+    # Generate inherited hapmers
     echo "Generating hapmers for Terminal Trio..."
-    bash "${MERQURY_SOFTWARE}/trio/hapmers.sh" \
+    "${MERQURY_SOFTWARE}/trio/hapmers.sh" \
         "${MERYL_DIR}/${ILLUM_MAT}.meryl" \
         "${MERYL_DIR}/${ILLUM_PAT}.meryl" \
         "${MERYL_DIR}/${ILLUM_TERM}.meryl"
-
-    # 2. Run Merqury to generate Spectra-plots and stats
-    # Usage: merqury.sh <offspring.meryl> <mat.hapmer.meryl> <pat.hapmer.meryl> <output_prefix>
-    echo "Running Merqury spectra-cn and trio plots for ${ILLUM_TERM}..."
-    bash "${MERQURY_SOFTWARE}/merqury.sh" \
-        "${MERYL_DIR}/${ILLUM_TERM}.meryl" \
-        "mat.hapmer.meryl" \
-        "pat.hapmer.meryl" \
-        "${ILLUM_TERM}_terminal_trio"
 	
 	cd "$PROJECT_ROOT"
 else
@@ -345,12 +339,6 @@ if [[ "$ThreeGenMode" == "YES" ]]; then
             "${MERYL_DIR}/${ILLUM_MGS}.meryl" \
             "${MERYL_DIR}/${ILLUM_MAT}.meryl"
 
-        echo "Running Merqury spectra-cn and trio plots for ${ILLUM_MAT}..."
-        bash "${MERQURY_SOFTWARE}/merqury.sh" \
-            "${MERYL_DIR}/${ILLUM_MAT}.meryl" \
-            "mat.hapmer.meryl" \
-            "pat.hapmer.meryl" \
-            "${ILLUM_MAT}_maternal_f1_trio"
     else
         echo "WARNING: ThreeGenMode is YES but Grandparent IDs (MGS/MGD) are missing."
     fi
