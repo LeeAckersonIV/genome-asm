@@ -5,6 +5,12 @@
 
 ---
 
+# Software Installation
+
+```bash
+pip install pandas matplotlib seaborn
+```
+
 # Workflow Execution
 
 ```bash
