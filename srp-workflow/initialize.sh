@@ -25,7 +25,7 @@
 
 # Example Command Execution
 # ----------------------------------------------------------------------------------------------- #
-# ./initialize.sh --projectROOT ./SRP_1 --illumina.terminal.lib LIB212039 --illumina.maternal.lib LIB212038 --illumina.paternal.lib LIB212041 --illumina.MGS.lib LIB212046 --illumina.MGD.lib LIB212044 --hifi.terminal.lib LIB212031 --hifi.maternal.lib LIB212951
+# ./initialize.sh --projectROOT ../SRP_1 --illumina.terminal.lib LIB212039 --illumina.maternal.lib LIB212038 --illumina.paternal.lib LIB212041 --illumina.MGS.lib LIB212046 --illumina.MGD.lib LIB212044 --hifi.terminal.lib LIB212031 --hifi.maternal.lib LIB212951
 # =============================================================================================== #
 
 
@@ -145,7 +145,7 @@ done
 # Validate that all required inputs are supplied
 # ----------------------------------------------------------------------------------------------- #
 if [[ "$ThreeGenMode" == "YES" ]]; then
-	REQUIRED_VARS=("ILLUM_TERM" "ILLUM_MAT" "ILLUM_PAT" "HIFI_TERM" "ILLUM_MGS" "ILLUM_MGD")
+	REQUIRED_VARS=("ILLUM_TERM" "ILLUM_MAT" "ILLUM_PAT" "HIFI_TERM" "ILLUM_MGS" "ILLUM_MGD" "HIFI_MAT")
 
 else
 	REQUIRED_VARS=("ILLUM_TERM" "ILLUM_MAT" "ILLUM_PAT" "HIFI_TERM")
@@ -230,10 +230,8 @@ echo ""
 
 # build standardized directory structure in Project Root directory 
 # ----------------------------------------------------------------------------------------------- #
+PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
 mkdir -p $PROJECT_ROOT
-cd $PROJECT_ROOT || { echo "Error: Could not enter $PROJECT_ROOT"; exit 1; }
-echo "Current working directory: $(pwd)"
-
 mkdir -p "${PROJECT_ROOT}/data"
 mkdir -p "${PROJECT_ROOT}/data/illumina.paternal"
 mkdir -p "${PROJECT_ROOT}/data/illumina.maternal"
@@ -394,4 +392,5 @@ EOF
 echo "Configuration saved to: $PARAMS_CONFIG"
 # ----------------------------------------------------------------------------------------------- #
 
+echo "initialize.sh complete!"
 

@@ -16,14 +16,21 @@ export MERQURY_SOFTWARE="/mnt/research/qgg/software/merqury"
 export MERQURY="$MERQURY_SOFTWARE"
 export MERYL="/mnt/research/qgg/software/meryl-1.4.1/bin"
 export PATH="$MERYL:$PATH"
+export PATH="$MERYL_SOFTWARE:$PATH"
+export PATH="$MERQURY_SOFTWARE:$MERQURY_SOFTWARE/build:$PATH"
 
 # Workflow Defaults
 export RUNFASTQC="YES"
 export ThreeGenMode="YES"
 export LOAD_PARAMS_CONFIG="NO"
+export RUN_DC="YES"
+export BC_ONT="NO"
+
+
 
 # Environments
 # need micromamba genomescope2 env available for readQC.sh
+# need micromamba nanopack env available for filter.sh
 
 
 
