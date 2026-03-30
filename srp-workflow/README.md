@@ -24,6 +24,8 @@ pip install pandas matplotlib seaborn
 
 # Workflow Execution
 
+**Note:** Adjust the `env.bashrc` to work on your system before running workflow
+
 ```bash
 
 # Move to scratch space with plenty of storage space
@@ -52,4 +54,3 @@ sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
 tail -f kmers.log
 
 ```
-**Note:** Adjust the `env.bashrc` to work on your system before running workflow
