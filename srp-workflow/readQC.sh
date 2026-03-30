@@ -8,6 +8,7 @@
 # readQC.sh \
 #	--load.project.params \		# can re-use input paramter config from initialize.sh; default NO
 #	--projectROOT \ 			# where initialize.sh built the project directory at.
+#	--kmer.length \ 			# kmer length for meryl dbs and kmer analysis; default=31
 #	--illumina.terminal.lib \  	# library IDs for terminal animal illumina data
 #	--illumina.maternal.lib \ 	# library IDs for maternal animal [F1] illumina data
 #	--illumina.paternal.lib \ 	# library IDs for paternal animal illumina data
@@ -70,6 +71,7 @@ usage() {
 	echo "readQC.sh \ "
 	echo "	--load.project.params \		# can re-use input paramter config from initialize.sh; default NO"
 	echo "	--projectROOT \ 			# where directory strcuture will be built, default is working dir"
+	echo "	--kmer.length \ 			# kmer length for meryl dbs and kmer analysis; default=31"
 	echo "	--illumina.terminal.lib \  	# REQUIRED; library IDs for terminal animal illumina data"
 	echo "	--illumina.maternal.lib \ 	# REQUIRED; library IDs for maternal animal [F1] illumina data"
 	echo "	--illumina.paternal.lib \ 	# REQUIRED; library IDs for paternal animal illumina data"
@@ -109,6 +111,7 @@ ILLUM_MGS="NA"
 ILLUM_MGD="NA"
 ONT_TERM="NA"
 ONT_MAT="NA"
+KMER_LENGTH="31"
 
 # load env.bashrc, inputs are overwritten first by config.params; and then by command line
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -155,6 +158,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
 		--load.project.params)     	LOAD_CONFIG_PARAMS="$2"; shift 2 ;;
         --projectROOT)     		 	PROJECT_ROOT="$2"; shift 2 ;;
+		--kmer.length)    		 	KMER_LENGTH="$2"; shift 2 ;;
 		--illumina.terminal.lib) 	ILLUM_TERM="$2"; shift 2 ;;
 		--illumina.maternal.lib) 	ILLUM_MAT="$2"; shift 2 ;;
 		--illumina.paternal.lib) 	ILLUM_PAT="$2"; shift 2 ;;
@@ -252,7 +256,7 @@ echo "QC complete. Individual stats are in: $SEQKIT_OUT"
 
 # 5. run Meryl [kmer analysis]
 # ----------------------------------------------------------------------------------------------- #
-echo "Starting K-mer Analysis with Meryl..."
+echo "Starting K-mer (k=$KMER_LENGTH) Analysis with Meryl..."
 
 # sort out which animals to include (3GenMode?)
 KMER_LIBS=("$ILLUM_TERM" "$ILLUM_MAT" "$ILLUM_PAT")
@@ -268,7 +272,7 @@ for lib in "${KMER_LIBS[@]}"; do
 		if ls $INPUT_FILES >/dev/null 2>&1; then
             
 			echo "Counting k-mers for: $lib"
-            "${MERYL_SOFTWARE}/meryl" k=21 count threads=16 memory=100G $INPUT_FILES output "${MERYL_DIR}/${lib}.meryl"
+            "${MERYL_SOFTWARE}/meryl" k="$KMER_LENGTH" count threads=16 memory=100G $INPUT_FILES output "${MERYL_DIR}/${lib}.meryl"
             "${MERYL_SOFTWARE}/meryl" statistics "${MERYL_DIR}/${lib}.meryl" > "${MERYL_DIR}/${lib}.stats"
             "${MERYL_SOFTWARE}/meryl" histogram "${MERYL_DIR}/${lib}.meryl" > "${MERYL_DIR}/${lib}.hist"
             echo "K-mer profile for $lib complete."
@@ -292,7 +296,7 @@ for lib in "${KMER_LIBS[@]}"; do
 		
         echo "Processing $lib..."
         mkdir -p "${GS_OUT}/${lib}"
-		Rscript "$GENOMESCOPE2_SOFTWARE" -i "${MERYL_DIR}/${lib}.hist" -k 21 -p 2 -o "${GS_OUT}/${lib}"
+		Rscript "$GENOMESCOPE2_SOFTWARE" -i "${MERYL_DIR}/${lib}.hist" -k "$KMER_LENGTH" -p 2 -o "${GS_OUT}/${lib}"
     
 	fi
 done
