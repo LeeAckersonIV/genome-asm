@@ -40,23 +40,12 @@ cd /mnt/gs21/scratch/ackers24/srp-sandbox
     --hifi.maternal.lib LIB212951
 
 # Run readQC.sh
-salloc --time=8:00:00 --cpus-per-task=16 --mem=250G
-nohup "${SRP_WORKFLOW}"/readQC.sh --projectROOT SRP_1 --load.project.params YES > readQC.log 2>&1 &
-tail -f readQC.log
-
-# OR
 sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
     --job-name=readQC --output=readQC.log \
     --wrap="${SRP_WORKFLOW}/readQC.sh --projectROOT SRP_1 --load.project.params YES"
 tail -f readQC.log
 
 # Run kmers.sh
-salloc --time=8:00:00 --cpus-per-task=16 --mem=250G
-nohup "${SRP_WORKFLOW}"/kmers.sh --projectROOT SRP_1 --load.project.params YES > kmers.log 2>&1 &
-tail -f kmers.log
-
-# OR
-
 sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
     --job-name=kmers --output=kmers.log \
     --wrap="${SRP_WORKFLOW}/kmers.sh --projectROOT SRP_1 --load.project.params YES"
