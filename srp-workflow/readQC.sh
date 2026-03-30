@@ -27,12 +27,12 @@
 # =============================================================================================== #
 # Example Command Execution
 # ----------------------------------------------------------------------------------------------- #
-# salloc --time=4:00:00 --cpus-per-task=8 --mem=100G
+# salloc --time=24:00:00 --cpus-per-task=16 --mem=250G
 # ./readQC.sh --projectROOT ~/scripts/SRP_1 --illumina.terminal.lib LIB212039 --illumina.maternal.lib LIB212038 --illumina.paternal.lib LIB212041 --illumina.MGS.lib LIB212046 --illumina.MGD.lib LIB212044 --hifi.terminal.lib LIB212031 --hifi.maternal.lib LIB212951
 
 # OR, IF initialize.sh was RUN FIRST:
 
-# salloc --time=4:00:00 --cpus-per-task=8 --mem=100G
+# salloc --time=24:00:00 --cpus-per-task=16 --mem=250G
 # ./readQC.sh --projectROOT ../SRP_1 --load.project.params YES
 # =============================================================================================== #
 
@@ -208,6 +208,7 @@ fi
 
 # variables and directory structure
 QC_OUT="${PROJECT_ROOT}/dataQC"
+FASTQC_OUT="${QC_OUT}/fastqc_outputs"
 DATA_DIR="${PROJECT_ROOT}/data"
 SEQKIT_OUT="${QC_OUT}/per_read_stats"
 mkdir -p "$SEQKIT_OUT"
@@ -220,8 +221,8 @@ mkdir -p "$GS_OUT"
 
 # 1. run fastqc
 # ----------------------------------------------------------------------------------------------- #
-find "${PROJECT_ROOT}/data" -name "*.fastq.gz" | xargs "${FASTQC_SOFTWARE}/fastqc" -o "$QC_OUT" -t 8
-echo "FastQC complete. Results are in: ${PROJECT_ROOT}/dataQC"
+find "${PROJECT_ROOT}/data" -name "*.fastq.gz" | xargs "${FASTQC_SOFTWARE}/fastqc" -o "$FASTQC_OUT" -t 8
+echo "FastQC complete. Results are in: $FASTQC_OUT"
 
 # 2. run seqkit
 # ----------------------------------------------------------------------------------------------- #
@@ -249,7 +250,7 @@ done
 # 4. run multiqc
 # ----------------------------------------------------------------------------------------------- #
 echo "Generating MultiQC Report..."
-"${MULTIQC_SOFTWARE}/multiqc" "$QC_OUT" -o "$QC_OUT" --filename "MultiQC_Report"
+"${MULTIQC_SOFTWARE}/multiqc" "$FASTQC_OUT" -o "$QC_OUT" --filename "MultiQC_Report"
 echo "MultiQC complete. Review your report at: ${PROJECT_ROOT}/dataQC/MultiQC_Report.html"
 echo "QC complete. Individual stats are in: $SEQKIT_OUT"
 
