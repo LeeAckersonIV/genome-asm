@@ -16,6 +16,7 @@ unzip main.zip 'genome-asm-main/srp-workflow/*'
 mv ./genome-asm-main/srp-workflow .
 rm -rf main.zip genome-asm-main
 cd srp-workflow/
+export SRP_WORKFLOW="$PWD"
 
 # Build dependency environment
 pip install pandas matplotlib seaborn
@@ -24,14 +25,40 @@ pip install pandas matplotlib seaborn
 # Workflow Execution
 
 ```bash
+
+# Move to scratch space with plenty of storage space
+cd /mnt/gs21/scratch/ackers24/srp-sandbox
+
 # Run initialize.sh
-./initialize.sh --projectROOT ../SRP_1 --illumina.terminal.lib LIB212039 --illumina.maternal.lib LIB212038 --illumina.paternal.lib LIB212041 --illumina.MGS.lib LIB212046 --illumina.MGD.lib LIB212044 --hifi.terminal.lib LIB212031 --hifi.maternal.lib LIB212951
+"${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP_1 \
+    --illumina.terminal.lib LIB212039 \
+    --illumina.maternal.lib LIB212038 \
+    --illumina.paternal.lib LIB212041 \
+    --illumina.MGS.lib LIB212046 \
+    --illumina.MGD.lib LIB212044 \
+    --hifi.terminal.lib LIB212031 \
+    --hifi.maternal.lib LIB212951
 
 # Run readQC.sh
 salloc --time=24:00:00 --cpus-per-task=16 --mem=250G
-nohup ./readQC.sh --projectROOT ../SRP_1 --load.project.params YES > readQC.log 2>&1 &
+nohup "${SRP_WORKFLOW}"/readQC.sh --projectROOT SRP_1 --load.project.params YES > readQC.log 2>&1 &
 tail -f readQC.log
 
+# OR
+sbatch --time=24:00:00 --cpus-per-task=16 --mem=64G \
+    --job-name=readQC --output=readQC.log \
+    --wrap="${SRP_WORKFLOW}/readQC.sh --projectROOT SRP_1 --load.project.params YES"
+
+# Run kmers.sh
+salloc --time=24:00:00 --cpus-per-task=16 --mem=250G
+nohup "${SRP_WORKFLOW}"/kmers.sh --projectROOT SRP_1 --load.project.params YES > kmers.log 2>&1 &
+tail -f kmers.log
+
+# OR
+
+sbatch --time=24:00:00 --cpus-per-task=16 --mem=250G \
+    --job-name=kmers --output=kmers.log \
+    --wrap="${SRP_WORKFLOW}/kmers.sh --projectROOT SRP_1 --load.project.params YES"
 
 ```
 **Note:** Adjust the `env.bashrc` to work on your system before running workflow
