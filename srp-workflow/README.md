@@ -2,6 +2,8 @@
 
 ### 1. initialize.sh
 ### 2. readQC.sh
+### 3. kmers.sh
+### 4. filter.sh
 
 ---
 
