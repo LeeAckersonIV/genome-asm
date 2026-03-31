@@ -28,12 +28,12 @@
 # Example Command Execution
 # ----------------------------------------------------------------------------------------------- #
 # salloc --time=24:00:00 --cpus-per-task=16 --mem=250G
-# ./kmers.sh --projectROOT ../SRP_1 --illumina.terminal.lib LIB212039 --illumina.maternal.lib LIB212038 --illumina.paternal.lib LIB212041 --illumina.MGS.lib LIB212046 --illumina.MGD.lib LIB212044 --hifi.terminal.lib LIB212031 --hifi.maternal.lib LIB212951
+# ./kmers.sh --projectROOT SRP_1 --illumina.terminal.lib LIB212039 --illumina.maternal.lib LIB212038 --illumina.paternal.lib LIB212041 --illumina.MGS.lib LIB212046 --illumina.MGD.lib LIB212044 --hifi.terminal.lib LIB212031 --hifi.maternal.lib LIB212951
 
 # OR, IF initialize.sh was RUN FIRST:
 
 # salloc --time=24:00:00 --cpus-per-task=16 --mem=250G
-# ./kmers.sh --projectROOT ../SRP_1 --load.project.params YES
+# ./kmers.sh --projectROOT SRP_1 --load.project.params YES
 # =============================================================================================== #
 
 
@@ -207,6 +207,8 @@ mkdir -p "$MERYL_DIR"
 GS_OUT="${QC_OUT}/genomescope"
 mkdir -p "$GS_OUT"
 DATA_DIR="${PROJECT_ROOT}/data"
+YAK_DIR="${QC_OUT}/yak"
+mkdir -p "${YAK_DIR}"
 # ----------------------------------------------------------------------------------------------- #
 
 
@@ -262,7 +264,7 @@ micromamba deactivate
 # ----------------------------------------------------------------------------------------------- #
 
 
-# 3. run Merqury Trio Plotting
+# 3. run Merqury Hapmer Databases & Trio Plotting
 # ----------------------------------------------------------------------------------------------- #
 echo "Initiating Merqury Trio Analysis..."
 export PATH="$MERYL_SOFTWARE:$MERQURY_SOFTWARE:$MERQURY_SOFTWARE/build:$PATH"
@@ -298,7 +300,7 @@ if [[ "$ThreeGenMode" == "YES" ]]; then
 		mkdir -p "$MAT_TRIO_DIR" && cd "$MAT_TRIO_DIR"
 
         echo "Generating hapmers for Maternal F1 Trio..."
-        bash "${MERQURY_SOFTWARE}/trio/hapmers.sh" \
+        "${MERQURY_SOFTWARE}/trio/hapmers.sh" \
             "${MERYL_DIR}/${ILLUM_MGD}.meryl" \
             "${MERYL_DIR}/${ILLUM_MGS}.meryl" \
             "${MERYL_DIR}/${ILLUM_MAT}.meryl"
@@ -312,6 +314,27 @@ fi
 cd "$PROJECT_ROOT"
 echo "Merqury Trio Plotting complete."
 # ----------------------------------------------------------------------------------------------- #
+
+# 3. run YAK for kmer databases (needed for HiFiasm)
+# ----------------------------------------------------------------------------------------------- #
+
+YAK_LIBS=("$ILLUM_TERM" "$ILLUM_MAT" "$ILLUM_PAT")
+if [[ "$ThreeGenMode" == "YES" ]]; then
+    YAK_LIBS+=("$ILLUM_MGS" "$ILLUM_MGD")
+fi
+
+for lib in "${YAK_LIBS[@]}"; do
+    if [[ "$lib" != "NA" ]]; then
+		
+        echo "Generating Yak hash for: $lib"
+        INPUT_FILES=$(ls ${PROJECT_ROOT}/data/illumina.*/${lib}*.fastq.gz)
+        "${YAK_SOFTWARE}" count -t 16 -b 37 -o "${YAK_DIR}/${lib}.yak" <(zcat $INPUT_FILES)
+		
+    fi
+done
+
+# ----------------------------------------------------------------------------------------------- #
+
 
 echo "kmers.sh complete!"
 

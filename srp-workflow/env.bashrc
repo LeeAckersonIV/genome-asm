@@ -7,6 +7,7 @@ export ONT_DIR="NA"
 export SNP_DIR="NA"
 
 # Default Software Paths
+export ENV_BASHRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export FASTQC_SOFTWARE="/mnt/research/qgg/software/fastqc_v0.11.5"
 export MULTIQC_SOFTWARE="/mnt/research/qgg/software/multiqc_v1.33/bin"
 export SEQKIT_SOFTWARE="/mnt/research/qgg/software/seqkit-2.13.0"
@@ -15,9 +16,15 @@ export GENOMESCOPE2_SOFTWARE="/mnt/research/qgg/software/genomescope2.0/genomesc
 export MERQURY_SOFTWARE="/mnt/research/qgg/software/merqury"
 export MERQURY="$MERQURY_SOFTWARE"
 export MERYL="/mnt/research/qgg/software/meryl-1.4.1/bin"
+export HIFIASM="/mnt/research/qgg/software/hifiasm/hifiasm"
+export YAK_SOFTWARE="/mnt/research/qgg/software/yak-0.1-r69/yak"
 export PATH="$MERYL:$PATH"
 export PATH="$MERYL_SOFTWARE:$PATH"
 export PATH="$MERQURY_SOFTWARE:$MERQURY_SOFTWARE/build:$PATH"
+
+# Default References
+export RDNA_REF="${ENV_BASHRC_DIR}/references/pig_rDNA.fasta"
+export MTDNA_REF="${ENV_BASHRC_DIR}/references/pig_MT.fasta"
 
 # Workflow Defaults
 export RUNFASTQC="YES"
@@ -30,7 +37,7 @@ export BC_ONT="NO"
 
 # Environments
 # need micromamba genomescope2 env available for readQC.sh
-# need micromamba nanopack env available for filter.sh
+# need micromamba nanopack env available for filter.sh # micromamba create -n nanopack -c conda-forge -c bioconda chopper
 
 
 
