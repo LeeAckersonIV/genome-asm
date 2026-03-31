@@ -113,6 +113,7 @@ ONT_MAT="NA"
 # load env.bashrc, inputs are overwritten first by config.params; and then by command line
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$PWD"
+PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
 if [[ -f "${PIPELINE_DIR}/env.bashrc" ]]; then
     echo "Sourcing configuration from ${PIPELINE_DIR}/env.bashrc"
     source "${PIPELINE_DIR}/env.bashrc"

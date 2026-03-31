@@ -113,6 +113,7 @@ KMER_LENGTH="31"
 # load env.bashrc, inputs are overwritten first by config.params; and then by command line
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$PWD"
+PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
 if [[ -f "${PIPELINE_DIR}/env.bashrc" ]]; then
     echo "Sourcing configuration from ${PIPELINE_DIR}/env.bashrc"
     source "${PIPELINE_DIR}/env.bashrc"
@@ -199,6 +200,7 @@ fi
 
 # 0. initialize variables and directory structure
 # ----------------------------------------------------------------------------------------------- #
+PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
 QC_OUT="${PROJECT_ROOT}/dataQC"
 MERYL_DIR="${QC_OUT}/meryl"
 mkdir -p "$MERYL_DIR"
