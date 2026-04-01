@@ -2,8 +2,7 @@
 
 # =============================================================================================== #
 # Script to perform quality and length filtering on input long read sequences (HiFi and ONT).
-# 	DeepConsensus is run on the HiFi data prior to filtering to boost read quality.
-#	FastQC + MuiltiQC is run again to validate read filtering results.
+#	FastQC + MuiltiQC + plotting is run again to validate read filtering results.
 # Author: Lee Ackerson {ackers24@msu.edu}
 # ----------------------------------------------------------------------------------------------- #
 # filter.sh \
@@ -272,8 +271,6 @@ micromamba deactivate
 # Filter ONT Data (Length + QV)
 # ----------------------------------------------------------------------------------------------- #
 
-
-
 # set env
 micromamba activate nanopack
 
@@ -358,6 +355,6 @@ echo "Generating MultiQC Report..."
 echo "MultiQC complete. Review your report at: ${PROJECT_ROOT}/dataQC/MultiQC_Report_Cleaned.html"
 # ----------------------------------------------------------------------------------------------- #
 
-
 echo "filter.sh complete!"
+
 

@@ -38,3 +38,20 @@ bash /mnt/research/qgg/software/merqury/merqury.sh \
     "mat.hapmer.meryl" \
     "pat.hapmer.meryl" \
     LIB212039_terminal_trio
+
+
+# merqury plots
+cd /mnt/gs21/scratch/ackers24/srp-sandbox
+rm -rf dataQC/merqury_trio_terminal/*
+cd dataQC/merqury_trio_terminal/
+
+
+export PATH="/mnt/research/qgg/software/meryl-1.4.1/bin:$PATH"
+export MERQURY="/mnt/research/qgg/software/merqury"
+export PATH="$MERQURY:$MERQURY/build:$PATH"
+
+bash $MERQURY/trio/hapmers.sh \
+../../dataQC/meryl/LIB212038.meryl \
+../../dataQC/meryl/LIB212041.meryl \
+../../dataQC/meryl/LIB212039.meryl
+

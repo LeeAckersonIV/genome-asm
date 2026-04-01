@@ -393,4 +393,3 @@ echo "Configuration saved to: $PARAMS_CONFIG"
 # ----------------------------------------------------------------------------------------------- #
 
 echo "initialize.sh complete!"
-

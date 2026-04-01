@@ -254,4 +254,3 @@ echo "QC complete. Individual stats are in: $SEQKIT_OUT"
 # ----------------------------------------------------------------------------------------------- #
 
 echo "readQC.sh complete!"
-
