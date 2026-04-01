@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 # set env
-micromamba activate verkko-v2.2
+ micromamba activate verkkov2.3.2
 verkko --version
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -f "${PIPELINE_DIR}/env.bashrc" ]]; then
