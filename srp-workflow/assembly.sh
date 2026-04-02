@@ -271,6 +271,7 @@ echo "Submitting Terminal Animal Trio Assemblies..."
 # HiFiasm Terminal
 sbatch --job-name=hifiasm_term --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
     --output="${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.terminal.log" "${PIPELINE_DIR}/launch_hifiasm_trio.sh" \
+	--pipelineDir "${PIPELINE_DIR}" \
     --outdir "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}" \
     --hifi "${CLEAN_DATA}/hifi.terminal" \
 	--ont "${CLEAN_DATA}/ont.terminal" \
@@ -280,6 +281,7 @@ sbatch --job-name=hifiasm_term --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
 # Verkko Terminal
 sbatch --job-name=verkko_term --cpus-per-task=4 --mem=64G --time=6-00:00:00 \
     --output="${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}.terminal.log" "${PIPELINE_DIR}/launch_verkko_trio.sh" \
+	--pipelineDir "${PIPELINE_DIR}" \
     --outdir "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}" \
     --hifi "${CLEAN_DATA}/hifi.terminal" \
     --ont "${CLEAN_DATA}/ont.terminal" \
@@ -299,6 +301,7 @@ if [[ "$ThreeGenMode" == "YES" ]]; then
     # HiFiasm Maternal F1
     sbatch --job-name=hifiasm_mat --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
         --output="${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.maternal.log" "${PIPELINE_DIR}/launch_hifiasm_trio.sh" \
+		--pipelineDir "${PIPELINE_DIR}" \
         --outdir "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}" \
 		--hifi "${CLEAN_DATA}/hifi.maternal" \
 		--ont "${CLEAN_DATA}/ont.maternal" \
@@ -308,6 +311,7 @@ if [[ "$ThreeGenMode" == "YES" ]]; then
     # Verkko Maternal F1
     sbatch --job-name=verkko_mat --cpus-per-task=4 --mem=64G --time=6-00:00:00 \
         --output="${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}.maternal.log" "${PIPELINE_DIR}/launch_verkko_trio.sh" \
+		--pipelineDir "${PIPELINE_DIR}" \
         --outdir "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}" \
 		--hifi "${CLEAN_DATA}/hifi.maternal" \
 		--ont "${CLEAN_DATA}/ont.maternal" \
@@ -318,4 +322,3 @@ if [[ "$ThreeGenMode" == "YES" ]]; then
 fi
 
 # ------------------------------------------------------------------------------- #
-

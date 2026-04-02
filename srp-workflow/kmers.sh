@@ -203,7 +203,9 @@ fi
 PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
 QC_OUT="${PROJECT_ROOT}/dataQC"
 MERYL_DIR="${QC_OUT}/meryl"
+MERYL_COMPRESS_DIR="${QC_OUT}/meryl.compressed"
 mkdir -p "$MERYL_DIR"
+mkdir -p "$MERYL_COMPRESS_DIR"
 GS_OUT="${QC_OUT}/genomescope"
 mkdir -p "$GS_OUT"
 DATA_DIR="${PROJECT_ROOT}/data"
@@ -235,6 +237,10 @@ for lib in "${KMER_LIBS[@]}"; do
             "${MERYL_SOFTWARE}/meryl" histogram "${MERYL_DIR}/${lib}.meryl" > "${MERYL_DIR}/${lib}.hist"
             echo "K-mer profile for $lib complete."
 			
+			echo "Counting compressed k-mers for $lib"
+            "${MERYL_SOFTWARE}/meryl" k="$KMER_LENGTH" compress count threads=16 memory=100G $INPUT_FILES output "${MERYL_COMPRESS_DIR}/${lib}.meryl"
+			echo "Compressed k-mers for $lib complete."
+			
         else
             echo "WARNING: No files found for $lib in ${DATA_DIR}/illumina.*/"
         fi
@@ -264,7 +270,7 @@ micromamba deactivate
 # ----------------------------------------------------------------------------------------------- #
 
 
-# 3. run Merqury Hapmer Databases & Trio Plotting
+# 3. run Merqury Hapmer (Compressed and Non-Compressed) Databases & Trio Plotting
 # ----------------------------------------------------------------------------------------------- #
 echo "Initiating Merqury Trio Analysis..."
 export PATH="$MERYL_SOFTWARE:$MERQURY_SOFTWARE:$MERQURY_SOFTWARE/build:$PATH"
@@ -277,12 +283,23 @@ if [[ "$ILLUM_TERM" != "NA" && "$ILLUM_MAT" != "NA" && "$ILLUM_PAT" != "NA" ]]; 
 	TERM_TRIO_DIR="${QC_OUT}/merqury_trio_terminal"
 	mkdir -p "$TERM_TRIO_DIR" && cd "$TERM_TRIO_DIR"
 
-    # Generate inherited hapmers
+    # Generate inherited hapmers for plotting
     echo "Generating hapmers for Terminal Trio..."
     "${MERQURY_SOFTWARE}/trio/hapmers.sh" \
         "${MERYL_DIR}/${ILLUM_MAT}.meryl" \
         "${MERYL_DIR}/${ILLUM_PAT}.meryl" \
         "${MERYL_DIR}/${ILLUM_TERM}.meryl"
+	
+	cd "$PROJECT_ROOT"
+	TERM_TRIO_COMPRESS_DIR="${QC_OUT}/merqury_trio_terminal.compressed"
+	mkdir -p "$TERM_TRIO_COMPRESS_DIR" && cd "$TERM_TRIO_COMPRESS_DIR"
+	
+	# Generate compressed hapmers for verkko
+    echo "Generating compressed hapmers for Terminal Trio..."
+    "${MERQURY_SOFTWARE}/trio/hapmers.sh" \
+        "${MERYL_COMPRESS_DIR}/${ILLUM_MAT}.meryl" \
+        "${MERYL_COMPRESS_DIR}/${ILLUM_PAT}.meryl" \
+        "${MERYL_COMPRESS_DIR}/${ILLUM_TERM}.meryl"
 	
 	cd "$PROJECT_ROOT"
 else
@@ -304,7 +321,19 @@ if [[ "$ThreeGenMode" == "YES" ]]; then
             "${MERYL_DIR}/${ILLUM_MGD}.meryl" \
             "${MERYL_DIR}/${ILLUM_MGS}.meryl" \
             "${MERYL_DIR}/${ILLUM_MAT}.meryl"
+		
+		cd "$PROJECT_ROOT"
+		MAT_TRIO_COMPRESS_DIR="${QC_OUT}/merqury_trio_maternal.compressed"
+		mkdir -p "$MAT_TRIO_COMPRESS_DIR" && cd "$MAT_TRIO_COMPRESS_DIR"
 
+        echo "Generating compressed hapmers for Maternal F1 Trio..."
+        "${MERQURY_SOFTWARE}/trio/hapmers.sh" \
+            "${MERYL_COMPRESS_DIR}/${ILLUM_MGD}.meryl" \
+            "${MERYL_COMPRESS_DIR}/${ILLUM_MGS}.meryl" \
+            "${MERYL_COMPRESS_DIR}/${ILLUM_MAT}.meryl"
+		
+		cd "$PROJECT_ROOT"
+		
     else
         echo "WARNING: ThreeGenMode is YES but Grandparent IDs (MGS/MGD) are missing."
     fi

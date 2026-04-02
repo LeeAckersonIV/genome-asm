@@ -1,19 +1,10 @@
 #!/bin/bash -l
 
-# set env
-hifiasm --version
-PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "${PIPELINE_DIR}/env.bashrc" ]]; then
-    source "${PIPELINE_DIR}/env.bashrc"
-else
-    echo "Error: env.bashrc not found in ${PIPELINE_DIR}"
-    exit 1
-fi
-
 # parse command line args
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --outdir)  		HIFIASM_OUTDIR="$2"; shift 2 ;;
+        --pipelineDir)  PIPELINE_DIR="$2"; shift 2 ;;
+		--outdir)  		HIFIASM_OUTDIR="$2"; shift 2 ;;
         --hifi)     	CLEAN_HIFI_DIR="$2"; shift 2 ;;
         --ont)			CLEAN_ONT_DIR="$2"; shift 2 ;;
         --yak.mat) 		MAT_HAPMERS="$2"; shift 2 ;;
@@ -21,6 +12,15 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
+
+# set env
+hifiasm --version
+if [[ -f "${PIPELINE_DIR}/env.bashrc" ]]; then
+    source "${PIPELINE_DIR}/env.bashrc"
+else
+    echo "Error: env.bashrc not found in ${PIPELINE_DIR}"
+    exit 1
+fi
 
 # execute HiFiasm pipeline
 # ------------------------------------------------------------------------------- #
