@@ -63,5 +63,7 @@ sbatch --time=2-00:00:00 --cpus-per-task=48 --mem=400G \
 tail -f filter.log
 
 # Run assembly.sh
-"${SRP_WORKFLOW}/assembly.sh --projectROOT SRP_1 --load.project.params YES --verkko.outdir.name verkko2.2_trio --hifiasm.outdir.name hifiasm_trio"
+${SRP_WORKFLOW}/assembly.sh --projectROOT SRP_1 --load.project.params YES --verkko.outdir.name verkko2.2_trio --hifiasm.outdir.name hifiasm_trio &> assembly.log
+
 ```
+

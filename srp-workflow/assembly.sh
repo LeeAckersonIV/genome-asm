@@ -138,8 +138,6 @@ ONT_MAT="NA"
 
 # defaults if using outputs from earlier scripts in workflow
 PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
-MERYL_DIR="${PROJECT_ROOT}/dataQC/meryl"
-YAK_DIR="${PROJECT_ROOT}/dataQC/yak"
 
 
 # load env.bashrc, inputs are overwritten first by config.params; and then by command line
@@ -188,18 +186,18 @@ while [[ $# -gt 0 ]]; do
 		--load.project.params)     	LOAD_CONFIG_PARAMS="$2"; shift 2 ;;
         --projectROOT)     		 	PROJECT_ROOT="$2"; shift 2 ;;
 
-		--ref.rdna					RDNA_REF="$2"; shift 2 ;;
-		--ref.mtdna					MTDNA_REF="$2"; shift 2 ;;
-		--meryl.hapmers.mat			MERYL_HAP_MAT="$2"; shift 2 ;;
-		--meryl.hapmers.pat			MERYL_HAP_PAT="$2"; shift 2 ;;
-		--meryl.hapmers.MGS			MERYL_HAP_MGS="$2"; shift 2 ;;
-		--meryl.hapmers.MGD			MERYL_HAP_MGD="$2"; shift 2 ;;
-		--yak.hapmers.mat			YAK_HAP_MAT="$2"; shift 2 ;;
-		--yak.hapmers.pat			YAK_HAP_PAT="$2"; shift 2 ;;
-		--yak.hapmers.MGS			YAK_HAP_MGS="$2"; shift 2 ;;
-		--yak.hapmers.MGD			YAK_HAP_MGD="$2"; shift 2 ;;
-		--verkko.outdir.name		VERKKO_OUTDIR="$2"; shift 2 ;;
-		--hifiasm.outdir.name		HIFIASM_OUTDIR="$2"; shift 2 ;;
+		--ref.rdna)					RDNA_REF="$2"; shift 2 ;;
+		--ref.mtdna)				MTDNA_REF="$2"; shift 2 ;;
+		--meryl.hapmers.mat)		MERYL_HAP_MAT="$2"; shift 2 ;;
+		--meryl.hapmers.pat)		MERYL_HAP_PAT="$2"; shift 2 ;;
+		--meryl.hapmers.MGS)		MERYL_HAP_MGS="$2"; shift 2 ;;
+		--meryl.hapmers.MGD)		MERYL_HAP_MGD="$2"; shift 2 ;;
+		--yak.hapmers.mat)			YAK_HAP_MAT="$2"; shift 2 ;;
+		--yak.hapmers.pat)			YAK_HAP_PAT="$2"; shift 2 ;;
+		--yak.hapmers.MGS)			YAK_HAP_MGS="$2"; shift 2 ;;
+		--yak.hapmers.MGD)			YAK_HAP_MGD="$2"; shift 2 ;;
+		--verkko.outdir.name)		VERKKO_OUTDIR="$2"; shift 2 ;;
+		--hifiasm.outdir.name)		HIFIASM_OUTDIR="$2"; shift 2 ;;
 		
 		--illumina.terminal.lib) 	ILLUM_TERM="$2"; shift 2 ;;
 		--illumina.maternal.lib) 	ILLUM_MAT="$2"; shift 2 ;;
@@ -247,6 +245,10 @@ fi
 # 0. Initialize variables & directory paths 
 # ------------------------------------------------------------------------------- #
 PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
+MERQURY_TERM_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_terminal" 
+MERQURY_MAT_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_maternal" 
+
+YAK_DIR="${PROJECT_ROOT}/dataQC/yak"
 VERKKO_TERM_DIR="${PROJECT_ROOT}/verkko.terminal"
 VERKKO_MAT_DIR="${PROJECT_ROOT}/verkko.maternal"
 HIFIASM_TERM_DIR="${PROJECT_ROOT}/hifiasm.terminal"
@@ -257,17 +259,17 @@ YAK_HAP_MAT="${YAK_DIR}/${ILLUM_MAT}.yak"
 YAK_HAP_PAT="${YAK_DIR}/${ILLUM_PAT}.yak"
 YAK_HAP_MGS="${YAK_DIR}/${ILLUM_MGS}.yak"
 YAK_HAP_MGD="${YAK_DIR}/${ILLUM_MGD}.yak"
-MERYL_HAP_MAT="${MERYL_DIR}/${ILLUM_MAT}.hapmer.meryl"
-MERYL_HAP_PAT="${MERYL_DIR}/${ILLUM_PAT}.hapmer.meryl"
-MERYL_HAP_MGS="${MERYL_DIR}/${ILLUM_MGS}.hapmer.meryl"
-MERYL_HAP_MGD="${MERYL_DIR}/${ILLUM_MGD}.hapmer.meryl"
+MERYL_HAP_MAT="${MERQURY_TERM_DIR}/${ILLUM_MAT}.hapmer.meryl"
+MERYL_HAP_PAT="${MERQURY_TERM_DIR}/${ILLUM_PAT}.hapmer.meryl"
+MERYL_HAP_MGS="${MERQURY_MAT_DIR}/${ILLUM_MGS}.hapmer.meryl"
+MERYL_HAP_MGD="${MERQURY_MAT_DIR}/${ILLUM_MGD}.hapmer.meryl"
 
 # 1. Terminal Animal Assemblies (Offspring: Term | Parents: Mat + Pat)
 # ------------------------------------------------------------------------------- #
 echo "Submitting Terminal Animal Trio Assemblies..."
 
 # HiFiasm Terminal
-sbatch --job-name=hifiasm_term --cpus-per-task=48 --mem=400G --time=3-00:00:00 \
+sbatch --job-name=hifiasm_term --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
     --output="${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.terminal.log" launch_hifiasm_trio.sh \
     --outdir "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}" \
     --hifi "${CLEAN_DATA}/hifi.terminal" \
@@ -295,7 +297,7 @@ if [[ "$ThreeGenMode" == "YES" ]]; then
     echo "Submitting Maternal F1 Animal Trio Assemblies..."
 
     # HiFiasm Maternal F1
-    sbatch --job-name=hifiasm_mat --cpus-per-task=48 --mem=400G --time=3-00:00:00 \
+    sbatch --job-name=hifiasm_mat --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
         --output="${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.maternal.log" launch_hifiasm_trio.sh \
         --outdir "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}" \
 		--hifi "${CLEAN_DATA}/hifi.maternal" \
