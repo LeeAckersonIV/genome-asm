@@ -355,11 +355,13 @@ fi
 
 for lib in "${YAK_LIBS[@]}"; do
     if [[ "$lib" != "NA" ]]; then
-		
         echo "Generating Yak hash for: $lib"
-        INPUT_FILES=$(ls ${PROJECT_ROOT}/data/illumina.*/${lib}*.fastq.gz)
-        "${YAK_SOFTWARE}" count -t 16 -b 37 -o "${YAK_DIR}/${lib}.yak" <(zcat $INPUT_FILES)
-		
+        
+        # Identify the R1 and R2 files specifically
+        R1=$(ls ${PROJECT_ROOT}/data/illumina.*/${lib}*_R1*.fastq.gz)
+        R2=$(ls ${PROJECT_ROOT}/data/illumina.*/${lib}*_R2*.fastq.gz)
+        
+        "${YAK_SOFTWARE}" count -k31 -t16 -b37 -o "${YAK_DIR}/${lib}.yak" <(zcat $R1) <(zcat $R2)
     fi
 done
 

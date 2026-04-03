@@ -27,6 +27,8 @@ fi
 # set default command flags
 HIFIASM_CMD=(
     "${HIFIASM_SOFTWARE}"
+	--dual-scaf
+	--telo-m TTAGGG
     -o "${HIFIASM_OUTDIR}"
     -t "${SLURM_CPUS_PER_TASK:-48}"
     -1 "${MAT_HAPMERS}"

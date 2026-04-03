@@ -1,0 +1,9 @@
+# action points for pipeline
+
+1. clean up env.bashrc, maybe make mircomamba version
+2. update params.config so all software is included (from env.bashrc)
+4. For assembly.sh
+	- update input parameters if congfig not loaded (meryl dbs, etc.)
+	- update hifiasm commands (push to github if works)
+	- note the added library to micromamaba env for verkko (micromamba install networkx)
+	- talk to Wen about what we want for genome assembly in regards to duplications (-l 0)

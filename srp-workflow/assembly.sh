@@ -138,7 +138,8 @@ ONT_MAT="NA"
 
 # defaults if using outputs from earlier scripts in workflow
 PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
-
+VERKKO_OUTDIR="verkko2.3.2_trio"
+HIFIASM_OUTDIR="hifiasm_trio"
 
 # load env.bashrc, inputs are overwritten first by config.params; and then by command line
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
