@@ -2,7 +2,7 @@
 
 ### command
 
-perl addPatch.pl --gaf test.gaf --patch test_patch.tsv --map test_utig4_to_2 --verbose > test.out 2> test.log
+`perl addPatch.pl --gaf test.gaf --patch test_patch.tsv --map test_utig4_to_2 --verbose > test.out 2> test.log`
 
 there are four command line arguments:
 
