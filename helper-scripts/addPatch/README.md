@@ -10,12 +10,14 @@ there are four command line arguments:
 --gaf test.gaf: this is the gaf from verkko before detangling, this tab delimited file must have the header: name path assignment
 --patch test_patch.tsv: also tab delimited file where the columns are (containing header):old_names(semicolon_separated) new_path(patch) new_name new_assignment
 --map test_utig4_2_utig1: the conversion map between utig4 and utig1, must contain no header
+--verbose
 ```
 test files and output are provided in this directory.
 
 ### prepare the patch file
 
-The patch file must be tab delimited and contain the header old_names(semicolon_separated) new_path(patch) new_name new_assignment
+The patch file must be tab delimited and contain the:
+`header  old_names(semicolon_separated)  new_path(patch)  new_name new_assignment`
 
 There are three possible ways patch can happen:
 
