@@ -245,8 +245,8 @@ fi
 # 0. Initialize variables & directory paths 
 # ------------------------------------------------------------------------------- #
 PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
-MERQURY_TERM_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_terminal" 
-MERQURY_MAT_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_maternal" 
+MERQURY_TERM_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_terminal.compressed" 
+MERQURY_MAT_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_maternal.compressed" 
 
 YAK_DIR="${PROJECT_ROOT}/dataQC/yak"
 VERKKO_TERM_DIR="${PROJECT_ROOT}/verkko.terminal"
