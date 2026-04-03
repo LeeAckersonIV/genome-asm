@@ -16,7 +16,7 @@ test files and output are provided in this directory.
 
 ### prepare the patch file
 
-The patch file must be tab delimited and contain the:
+The patch file must be **tab** delimited and contain the:
 
 `header  old_names(semicolon_separated)  new_path(patch)  new_name new_assignment`
 
