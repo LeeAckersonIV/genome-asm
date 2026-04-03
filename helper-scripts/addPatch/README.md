@@ -13,7 +13,7 @@ there are four command line arguments:
 ```
 test files and output are provided in this directory.
 
-### prepar the patch file
+### prepare the patch file
 
 The patch file must be tab delimited and contain the header old_names(semicolon_separated) new_path(patch) new_name new_assignment
 
