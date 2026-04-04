@@ -51,7 +51,7 @@ sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
 tail -f readQC.log
 
 # Run kmers.sh
-sbatch --time=10:00:00 --cpus-per-task=16 --mem=250G \
+sbatch --time=24:00:00 --cpus-per-task=16 --mem=250G \
     --job-name=kmers --output=kmers.log \
     --wrap="${SRP_WORKFLOW}/kmers.sh --projectROOT SRP_1 --load.project.params YES"
 tail -f kmers.log
