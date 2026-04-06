@@ -263,77 +263,85 @@ fi
 # ----------------------------------------------------------------------------------------------- #
 # illumina fastq files
 Term_Illumina_Reads=($(find "$ILLUM_DIR" -name "*${ILLUM_TERM}*" | sort))
-ln -sf "${Term_Illumina_Reads[0]}" "${PROJECT_ROOT}/data/illumina.terminal/"
-ln -sf "${Term_Illumina_Reads[1]}" "${PROJECT_ROOT}/data/illumina.terminal/"
+for file in "${Term_Illumina_Reads[@]}"; do
+    ln -sf "$file" "${PROJECT_ROOT}/data/illumina.terminal/"
+done
 
 Mat_Illumina_Reads=($(find "$ILLUM_DIR" -name "*${ILLUM_MAT}*" | sort))
-ln -sf "${Mat_Illumina_Reads[0]}" "${PROJECT_ROOT}/data/illumina.maternal/"
-ln -sf "${Mat_Illumina_Reads[1]}" "${PROJECT_ROOT}/data/illumina.maternal/"
+for file in "${Mat_Illumina_Reads[@]}"; do
+    ln -sf "$file" "${PROJECT_ROOT}/data/illumina.maternal/"
+done
 
 Pat_Illumina_Reads=($(find "$ILLUM_DIR" -name "*${ILLUM_PAT}*" | sort))
-ln -sf "${Pat_Illumina_Reads[0]}" "${PROJECT_ROOT}/data/illumina.paternal/"
-ln -sf "${Pat_Illumina_Reads[1]}" "${PROJECT_ROOT}/data/illumina.paternal/"
+for file in "${Pat_Illumina_Reads[@]}"; do
+    ln -sf "$file" "${PROJECT_ROOT}/data/illumina.paternal/"
+done
 
 if [[ "$ILLUM_MGD" != "NA" || "$ILLUM_MGS" != "NA" ]]; then # only if supplied
 	MGD_Illumina_Reads=($(find "$ILLUM_DIR" -name "*${ILLUM_MGD}*" | sort))
-	ln -sf "${MGD_Illumina_Reads[0]}" "${PROJECT_ROOT}/data/illumina.MGD/"
-	ln -sf "${MGD_Illumina_Reads[1]}" "${PROJECT_ROOT}/data/illumina.MGD/"
-
+	for file in "${MGD_Illumina_Reads[@]}"; do
+	    ln -sf "$file" "${PROJECT_ROOT}/data/illumina.MGD/"
+	done
+	
 	MGS_Illumina_Reads=($(find "$ILLUM_DIR" -name "*${ILLUM_MGS}*" | sort))
-	ln -sf "${MGS_Illumina_Reads[0]}" "${PROJECT_ROOT}/data/illumina.MGS/"
-	ln -sf "${MGS_Illumina_Reads[1]}" "${PROJECT_ROOT}/data/illumina.MGS/"
+	for file in "${MGS_Illumina_Reads[@]}"; do
+	    ln -sf "$file" "${PROJECT_ROOT}/data/illumina.MGS/"
+	done
 else
 	echo "Grandparent sequence data was not supplied; skipping related symlinking."
 fi
 
 echo ""
 echo "Identified and symlinked the following illumina fastq files:"
-echo "Terminal_R1 is: ${Term_Illumina_Reads[0]}"
-echo "Terminal_R2 is: ${Term_Illumina_Reads[1]}"
-echo "Maternal_R1 is: ${Mat_Illumina_Reads[0]}"
-echo "Maternal_R2 is: ${Mat_Illumina_Reads[1]}"
-echo "Paternal_R1 is: ${Pat_Illumina_Reads[0]}"
-echo "Paternal_R2 is: ${Pat_Illumina_Reads[1]}"
+echo "Terminal is: ${Term_Illumina_Reads[@]}"
+echo "Maternal is: ${Mat_Illumina_Reads[@]}"
+echo "Paternal is: ${Pat_Illumina_Reads[@]}"
 
 if [[ "$ThreeGenMode" == "YES" ]]; then
-echo "MGS_R1 is: ${MGS_Illumina_Reads[0]}" #if supplied
-echo "MGS_R2 is: ${MGS_Illumina_Reads[1]}" #if supplied
-echo "MGD_R1 is: ${MGD_Illumina_Reads[0]}" #if supplied
-echo "MGD_R2 is: ${MGD_Illumina_Reads[1]}" #if supplied
+echo "MGS is: ${MGS_Illumina_Reads[@]}" #if supplied
+echo "MGD is: ${MGD_Illumina_Reads[@]}" #if supplied
 fi
 echo ""
 
 # hifi fastq files
 HIFI_TERM_Reads=($(find "$HIFI_DIR" -name "*${HIFI_TERM}*"))
-ln -sf "${HIFI_TERM_Reads[0]}" "${PROJECT_ROOT}/data/hifi.terminal/"
+for file in "${HIFI_TERM_Reads[@]}"; do
+    ln -sf "$file" "${PROJECT_ROOT}/data/hifi.terminal/"
+done
 
 if [[ "$HIFI_MAT" != "NA" ]]; then
-	HIFI_MAT_Reads=($(find "$HIFI_DIR" -name "*${HIFI_MAT}*"))
-	ln -sf "${HIFI_MAT_Reads[0]}" "${PROJECT_ROOT}/data/hifi.maternal/"
+    HIFI_MAT_Reads=($(find "$HIFI_DIR" -name "*${HIFI_MAT}*"))
+    for file in "${HIFI_MAT_Reads[@]}"; do
+        ln -sf "$file" "${PROJECT_ROOT}/data/hifi.maternal/"
+    done
 else
-	HIFI_MAT_Reads="Not Supplied"
+    HIFI_MAT_Reads="Not Supplied"
 fi
 
 echo ""
 echo "Identified and symlinked the following HiFi fastq files:"
-echo "HIFI_TERM is: ${HIFI_TERM_Reads}"
-echo "HIFI_MAT is:	${HIFI_MAT_Reads}"
+echo "HIFI_TERM is: ${HIFI_TERM_Reads[@]}"
+echo "HIFI_MAT is:	${HIFI_MAT_Reads[@]}"
 echo ""
 
 # ont fastq files [IF SUPPLIED]
 if [[ "$ONT_TERM" != "NA" || "$ONT_MAT" != "NA" ]]; then
     
     # terminal ONT [IF SUPPLIED]
-    if [[ "$ONT_TERM" != "NA" ]]; then
-        ONT_TERM_Reads=($(find "$ONT_DIR" -name "*${ONT_TERM}*"))
-        ln -sf "${ONT_TERM_Reads}" "${PROJECT_ROOT}/data/ont.terminal/"
-    fi
+	if [[ "$ONT_TERM" != "NA" ]]; then
+	    ONT_TERM_Reads=($(find "$ONT_DIR" -name "*${ONT_TERM}*"))
+	    for file in "${ONT_TERM_Reads[@]}"; do
+	        ln -sf "$file" "${PROJECT_ROOT}/data/ont.terminal/"
+	    done
+	fi
 
     # maternal ONT [IF SUPPLIED]
-    if [[ "$ONT_MAT" != "NA" ]]; then
-        ONT_MAT_Reads=($(find "$ONT_DIR" -name "*${ONT_MAT}*"))
-        ln -sf "${ONT_MAT_Reads}" "${PROJECT_ROOT}/data/ont.maternal/"
-    fi
+	if [[ "$ONT_MAT" != "NA" ]]; then
+	    ONT_MAT_Reads=($(find "$ONT_DIR" -name "*${ONT_MAT}*"))
+	    for file in "${ONT_MAT_Reads[@]}"; do
+	        ln -sf "$file" "${PROJECT_ROOT}/data/ont.maternal/"
+	    done
+	fi
 
 else 
     echo "ONT sequence data was not supplied; skipping ONT symlinking."

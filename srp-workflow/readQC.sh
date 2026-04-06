@@ -223,10 +223,13 @@ echo "FastQC complete. Results are in: $FASTQC_OUT"
 for lib_dir in "${PROJECT_ROOT}/data"/*/; do
     lib_name=$(basename "$lib_dir")
 
-	if [[ "$lib_name" == hifi.* ]] || [[ "$lib_name" == ont.* && "$ONT_TERM" != "NA" && "$ONT_MAT" != "NA" ]]; then
-		echo "Processing Library: $lib_name"
-		${SEQKIT_SOFTWARE}/seqkit fx2tab -l -q -n -H "$lib_dir"/*.fastq.gz > "${SEQKIT_OUT}/${lib_name}_stats.tsv"
-    fi
+	if [[ "$lib_name" == hifi.* ]] || [[ "$lib_name" == ont.* ]]; then
+		
+		if ls "$lib_dir"/*.fastq.gz >/dev/null 2>&1; then		
+			echo "Processing Library: $lib_name"
+			${SEQKIT_SOFTWARE}/seqkit fx2tab -l -q -n -H "$lib_dir"/*.fastq.gz > "${SEQKIT_OUT}/${lib_name}_stats.tsv"
+		fi
+	fi
 done
 # ----------------------------------------------------------------------------------------------- #
 
@@ -235,11 +238,14 @@ done
 # ----------------------------------------------------------------------------------------------- #
 echo "Generating Joint Density Plots..."
 for stats_file in "${SEQKIT_OUT}"/*_stats.tsv; do
-    filename=$(basename "$stats_file")
+    lib_name=$(basename "$stats_file" _stats.tsv)
 
-	if [[ "$filename" == hifi.* ]] || [[ "$filename" == ont.* && "$ONT_TERM" != "NA" && "$ONT_MAT" != "NA" ]]; then	        
-		lib_name=$(basename "$stats_file" _stats.tsv)
-        python3 "${PIPELINE_DIR}/density_plot.py" "$stats_file" "${PLOT_DIR}/${lib_name}_joint_qc.png" "$lib_name"
+    if [[ "$lib_name" == hifi.* ]] || [[ "$lib_name" == ont.* ]]; then
+        echo "Plotting: $lib_name"
+        python3 "${PIPELINE_DIR}/density_plot.py" \
+            "$stats_file" \
+            "${PLOT_DIR}/${lib_name}_joint_qc.png" \
+            "$lib_name"
     fi
 done
 # ----------------------------------------------------------------------------------------------- #

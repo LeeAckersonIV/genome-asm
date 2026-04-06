@@ -252,7 +252,7 @@ echo "Filtering terminal HiFi: ${HIFI_TERM} (MinLen: ${HIFI_LENGTH}, MinQV: ${HI
 mkdir -p "${FILT_HIFI_TERM}"
 zcat "${PROJECT_ROOT}/data/hifi.terminal/${HIFI_TERM}"*.fastq.gz | \
     chopper -t 12 -q "$HIFI_QV" --minlength "$HIFI_LENGTH" | \
-    gzip > "${FILT_HIFI_TERM}/${HIFI_TERM}_clean_qv${HIFI_QV}_${HIFI_LENGTH}k.fastq.gz"
+    gzip > "${FILT_HIFI_TERM}/${HIFI_TERM}_clean_qv${HIFI_QV}_min${HIFI_LENGTH}.fastq.gz"
 
 ## maternal hifi
 if [[ "$ThreeGenMode" == "YES" && "$HIFI_MAT" != "NA" ]]; then
@@ -260,7 +260,7 @@ if [[ "$ThreeGenMode" == "YES" && "$HIFI_MAT" != "NA" ]]; then
     mkdir -p "${FILT_HIFI_MAT}"
     zcat "${PROJECT_ROOT}/data/hifi.maternal/${HIFI_MAT}"*.fastq.gz | \
         chopper -t 12 -q "$HIFI_QV" --minlength "$HIFI_LENGTH" | \
-        gzip > "${FILT_HIFI_MAT}/${HIFI_MAT}_clean_qv${HIFI_QV}_${HIFI_LENGTH}k.fastq.gz"
+        gzip > "${FILT_HIFI_MAT}/${HIFI_MAT}_clean_qv${HIFI_QV}_min${HIFI_LENGTH}.fastq.gz"
 fi
 
 # deactivate env
@@ -291,9 +291,11 @@ if [[ "$ONT_TERM" != "NA" ]]; then
 		echo "Filtering terminal ONT: ${ONT_TERM} @ QC=$ONT_QV and Length=$ONT_LENGTH"
 		mkdir -p "${FILT_ONT_TERM}"
 		zcat "${PROJECT_ROOT}/data/ont.terminal/${ONT_TERM}"*.fastq.gz | \
-			chopper -t 12 -q $ONT_QV --minlength $ONT_LENGTH | gzip > "${FILT_ONT_TERM}/${ONT_TERM}_q${ONT_QV}_${ONT_LENGTH}k.fastq.gz"
+			chopper -t 12 -q $ONT_QV --minlength $ONT_LENGTH | gzip > "${FILT_ONT_TERM}/${ONT_TERM}_qv${ONT_QV}_min${ONT_LENGTH}.fastq.gz"
 	fi
-	seqkit stats "${FILT_ONT_TERM}/"*.fastq.gz
+	if ls "${FILT_ONT_TERM}/"*.fastq.gz >/dev/null 2>&1; then
+	    seqkit stats "${FILT_ONT_TERM}/"*.fastq.gz
+	fi
 fi
 
 
@@ -312,9 +314,11 @@ if [[ "$ThreeGenMode" == "YES" && "$ONT_MAT" != "NA" ]]; then
 		echo "Filtering maternal ONT: ${ONT_MAT} @ QC=$ONT_QV and Length=$ONT_LENGTH"
     	mkdir -p "${FILT_ONT_MAT}"
 		zcat "${PROJECT_ROOT}/data/ont.maternal/${ONT_MAT}"*.fastq.gz | \
-			chopper -t 12 -q $ONT_QV --minlength $ONT_LENGTH | gzip > "${FILT_ONT_MAT}/${ONT_MAT}_q${ONT_QV}_${ONT_LENGTH}k.fastq.gz"
+			chopper -t 12 -q $ONT_QV --minlength $ONT_LENGTH | gzip > "${FILT_ONT_MAT}/${ONT_MAT}_qv${ONT_QV}_min${ONT_LENGTH}.fastq.gz"
 	fi
-	seqkit stats "${FILT_ONT_MAT}/"*.fastq.gz
+	if ls "${FILT_ONT_MAT}/"*.fastq.gz >/dev/null 2>&1; then
+	    seqkit stats "${FILT_ONT_MAT}/"*.fastq.gz
+	fi
 fi
 
 # deactivate env
@@ -341,11 +345,14 @@ done
 # run density_plot.py
 echo "Generating Joint Density Plots..."
 for stats_file in "${SEQKIT_OUT}"/*_cleaned_stats.tsv; do
-    filename=$(basename "$stats_file")
+    lib_name=$(basename "$stats_file" _cleaned_stats.tsv)
 
-	if [[ "$filename" == hifi.* ]] || [[ "$filename" == ont.* && "$ONT_TERM" != "NA" && "$ONT_MAT" != "NA" ]]; then	        
-		lib_name=$(basename "$stats_file" cleaned_stats.tsv)
-        python3 "${PIPELINE_DIR}/density_plot.py" "$stats_file" "${PLOT_DIR}/${lib_name}_cleaned_joint_qc.png" "$lib_name"
+    if [[ -f "$stats_file" ]]; then
+        echo "Plotting filtered data for: $lib_name"
+        python3 "${PIPELINE_DIR}/density_plot.py" \
+            "$stats_file" \
+            "${PLOT_DIR}/${lib_name}_cleaned_joint_qc.png" \
+            "$lib_name"
     fi
 done
 
