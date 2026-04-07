@@ -15,18 +15,18 @@ In addition, this repository includes detailed records of **assembled**, **detan
 - **Wapiti x Red Deer**
 
 ### 🧬 **Swine Reference Pangenome Project**
-- **Landrace × Yorkshire** (*n=30*)
-- **Duroc × {Landrace × Yorkshire}** (*n=30*)
+- **Landrace × Yorkshire** (*n=30* haplotype assemblies)
+- **Duroc × {Landrace × Yorkshire}** (*n=30* haplotype assemblies)
 
 ---
 
 ### 📂 Contents
-- **`helper-scripts`:**
+- **`helper-scripts`:**  Scripts to facilitate and automate manual curation of assemblies.
 - **`HiFiasm`:**
 - **`Verkko`:** 
 - **`pigT2T`:**
 - **`SwineReferencePangenome`:**
-- - **`srp-workflow`:**
+- - **`srp-workflow`:**  Robust pipeline for processing input reads all the way to pangenome construction in an organized and automated manner via readQC, filtering, k-mer generation / analysis, Verkko & HiFiasm assembly, and assemblyQC.
 - **`RuminantT2T`:**
 
 
