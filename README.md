@@ -12,9 +12,11 @@ In addition, this repository includes detailed records of **assembled**, **detan
 
 ### 🦌 **RuminantT2T Project**
 - **Red Deer × Wapiti**
+- **Wapiti x Red Deer**
 
 ### 🧬 **Swine Reference Pangenome Project**
-- **Duroc × {Landrace × Yorkshire}**
+- **Landrace × Yorkshire** (*n=30*)
+- **Duroc × {Landrace × Yorkshire}** (*n=30*)
 
 ---
 
@@ -24,6 +26,7 @@ In addition, this repository includes detailed records of **assembled**, **detan
 - **`Verkko`:** 
 - **`pigT2T`:**
 - **`SwineReferencePangenome`:**
+- - **`srp-workflow`:**
 - **`RuminantT2T`:**
 
 
