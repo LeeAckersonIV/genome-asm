@@ -26,7 +26,7 @@ In addition, this repository includes detailed records of **assembled**, **detan
 - **`Verkko`:** 
 - **`pigT2T`:**
 - **`SwineReferencePangenome`:**
-- - **`srp-workflow`:**  Robust pipeline for processing input reads all the way to pangenome construction in an organized and automated manner via readQC, filtering, k-mer generation / analysis, Verkko & HiFiasm assembly, and assemblyQC.
+- **`srp-workflow`:**  Robust pipeline for processing input reads all the way to pangenome construction in an organized and automated manner via readQC, filtering, k-mer generation / analysis, Verkko & HiFiasm assembly, and assemblyQC.
 - **`RuminantT2T`:**
 
 
