@@ -1,9 +1,16 @@
-# Contiguity: N50
+#!/bin/bash -l
 
-# Completeness: BUSCO
 
-# Correctness: QV
+# Contiguity: N50 [QUAST]
+
+
+# Completeness: BUSCO [BUSCO]
+
+
+# Correctness: QV [MERQURY / YAK]
+
 
 # Adaptor Presence (FCS-Adaptor)
+
 
 # Contaminant Presence (FCS-GX)

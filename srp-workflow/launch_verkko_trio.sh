@@ -30,6 +30,7 @@ fi
 # set default flags minus kmers/trio
 VERKKO_CMD=(
     verkko --slurm 
+	--snakeopts "--precommand 'micromamba run -p /mnt/ufs18/rs-015/qgg/software/micromamba/envs/verkkov2.3.2'"
     -d "${VERKKO_ASM_OUTDIR}"
     --unitig-abundance 4
     --hifi "${CLEAN_HIFI_DIR}"/*.fastq.gz
