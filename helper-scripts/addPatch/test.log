@@ -1,0 +1,17 @@
+[VERBOSE] PATH MERGED: 'sire_compressed.k31.hapmer_from_utig4-801' was replaced by patch(es) 'sire_compressed.k31.hapmer_from_utig4-1448' (combined with 'sire_compressed.k31.hapmer_from_utig4-1448')'
+[VERBOSE] PATH MERGED: 'sire_compressed.k31.hapmer_from_utig4-1448' was replaced by patch(es) 'sire_compressed.k31.hapmer_from_utig4-1448' (combined with 'sire_compressed.k31.hapmer_from_utig4-801')'
+[VERBOSE] PATH REPLACED: 'dam_compressed.k31.hapmer_from_utig4-1479' was replaced by patch(es) 'dam_compressed.k31.hapmer_from_utig4-1479'
+[VERBOSE] PATH REPLACED: 'sire_compressed.k31.hapmer_from_utig4-1474' was replaced by patch(es) 'sire_compressed.k31.hapmer_from_utig4-1474'
+[VERBOSE] PATH REPLACED: 'dam_compressed.k31.hapmer_from_utig4-820' was replaced by patch(es) 'dam_compressed.k31.hapmer_from_utig4-820'
+[VERBOSE] PATH SPLIT: 'dam_compressed.k31.hapmer_from_utig4-822' was replaced by patch(es) 'dam_compressed.k31.hapmer_from_utig4-822-new1', 'dam_compressed.k31.hapmer_from_utig4-822-new2'
+[VERBOSE] NODE REACTIVATED: Unused node 'utig4-1342' from 'dam_compressed.k31.hapmer_unused_utig4-1342' is now used by patch 'sire_compressed.k31.hapmer_from_utig4-1474'
+[VERBOSE] NODE REACTIVATED: Unused node 'utig4-1965' from 'sire_compressed.k31.hapmer_unused_utig4-1965' is now used by patch 'sire_compressed.k31.hapmer_from_utig4-1448'
+[VERBOSE] NODE REACTIVATED: Unused node 'utig4-1862' from 'dam_compressed.k31.hapmer_unused_utig4-1862' is now used by patch 'dam_compressed.k31.hapmer_from_utig4-820'
+[VERBOSE] NODE REACTIVATED: Unused node 'utig4-1863' from 'dam_compressed.k31.hapmer_unused_utig4-1863' is now used by patch 'dam_compressed.k31.hapmer_from_utig4-820'
+[VERBOSE] NODE REACTIVATED: Unused node 'utig4-1864' from 'dam_compressed.k31.hapmer_unused_utig4-1864' is now used by patch 'dam_compressed.k31.hapmer_from_utig4-820'
+[VERBOSE] NODE ORPHANED: 'utig4-1156' was left completely unconnected and swept into unused.
+[VERBOSE] NODE ORPHANED: 'utig4-1553' was left completely unconnected and swept into unused.
+[VERBOSE] NODE ORPHANED: 'utig4-1842' was left completely unconnected and swept into unused.
+[VERBOSE] NODE ORPHANED: 'utig4-1844' was left completely unconnected and swept into unused.
+[VERBOSE] NODE ORPHANED: 'utig4-556' was left completely unconnected and swept into unused.
+[VERBOSE] NODE ORPHANED: 'utig4-819' was left completely unconnected and swept into unused.

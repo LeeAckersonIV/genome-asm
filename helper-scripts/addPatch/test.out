@@ -1,0 +1,16 @@
+name	path	assignment
+dam_compressed.k31.hapmer_from_utig4-1479	>utig4-1157>utig4-1172>utig4-1175<utig4-1695<utig4-1480[N53116N:tangle]>utig4-1479	DAM_COMPRESSED.K31.HAPMER
+dam_compressed.k31.hapmer_from_utig4-820	>utig1-6295<utig1-3934<utig1-3934<utig1-3934<utig1-3934<utig1-3934<utig1-3934>utig1-3935>utig1-5392<utig1-4688>utig1-5393>utig1-16631<utig1-2376<utig1-2373>utig1-2375<utig1-2373>utig1-2374>utig1-6097>utig1-16116>utig1-16117>utig1-16631<utig1-2376<utig1-2373>utig1-2374>utig1-6098>utig1-16116<utig1-5459	DAM_COMPRESSED.K31.HAPMER
+dam_compressed.k31.hapmer_from_utig4-822-new1	<utig4-1551>utig4-1552	DAM_COMPRESSED.K31.HAPMER
+dam_compressed.k31.hapmer_from_utig4-822-new2	>utig4-2423>utig4-2424	DAM_COMPRESSED.K31.HAPMER
+sire_compressed.k31.hapmer_from_utig4-1448	<utig4-922<utig4-919>utig4-920<gapmanual-2-len-2225581-cov-1>utig4-1843>utig4-1965<utig4-625>utig4-624	SIRE_COMPRESSED.K31.HAPMER
+sire_compressed.k31.hapmer_from_utig4-1474	>utig4-1034>utig4-1038<utig4-1856<utig4-1342<utig4-1340<utig4-917>utig4-1474	SIRE_COMPRESSED.K31.HAPMER
+dam_compressed.k31.hapmer_from_utig4-1124	<utig4-666<utig4-663>utig4-665	DAM_COMPRESSED.K31.HAPMER
+sire_compressed.k31.hapmer_unused_utig4-1966	>utig4-1966	SIRE_COMPRESSED.K31.HAPMER
+na_unused_utig4-999	>utig4-999	NA
+dam_compressed.k31.hapmer_unused_utig4-1156	>utig4-1156	DAM_COMPRESSED.K31.HAPMER
+dam_compressed.k31.hapmer_unused_utig4-1553	>utig4-1553	DAM_COMPRESSED.K31.HAPMER
+sire_compressed.k31.hapmer_unused_utig4-1842	>utig4-1842	SIRE_COMPRESSED.K31.HAPMER
+sire_compressed.k31.hapmer_unused_utig4-1844	>utig4-1844	SIRE_COMPRESSED.K31.HAPMER
+sire_compressed.k31.hapmer_unused_utig4-556	>utig4-556	SIRE_COMPRESSED.K31.HAPMER
+dam_compressed.k31.hapmer_unused_utig4-819	>utig4-819	DAM_COMPRESSED.K31.HAPMER
