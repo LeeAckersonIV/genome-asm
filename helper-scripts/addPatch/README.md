@@ -14,6 +14,21 @@ there are four command line arguments:
 ```
 test files and output are provided in this directory.
 
+<<<<<<< Updated upstream
+=======
+The verbose log file contains a lot of useful information.
+
+### prepare utig4 to utig1 map
+
+This uses the `get_utig1_from_utig4.py` script.
+
+```bash
+awk 'NR==FNR {print $1 "\t" $2; next;} { n = split($2, nodes, /[<>[\]]/); for (i=1; i<=n; i++) if (nodes[i] ~ /^utig4-/) print nodes[i] "\t>" nodes[i]; }' test.gaf test.gaf | sort | uniq | python3 get_utig1_from_utig4.py combined-nodemap.txt combined-edges.gfa /dev/stdin nodelens.txt > test_utig4-utig1.map
+```
+This command takes the test.gaf and outputs `test_utig4-utig1.map` file. Other files including `combined-nodemap.txt`, `combined-edges.gfa`, and `nodelens.txt` come from Verkko.
+
+
+>>>>>>> Stashed changes
 ### prepare the patch file
 
 The patch file must be **tab** delimited and contain the:
