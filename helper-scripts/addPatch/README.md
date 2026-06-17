@@ -14,8 +14,6 @@ there are four command line arguments:
 ```
 test files and output are provided in this directory.
 
-<<<<<<< Updated upstream
-=======
 The verbose log file contains a lot of useful information.
 
 ### prepare utig4 to utig1 map
@@ -27,8 +25,6 @@ awk 'NR==FNR {print $1 "\t" $2; next;} { n = split($2, nodes, /[<>[\]]/); for (i
 ```
 This command takes the test.gaf and outputs `test_utig4-utig1.map` file. Other files including `combined-nodemap.txt`, `combined-edges.gfa`, and `nodelens.txt` come from Verkko.
 
-
->>>>>>> Stashed changes
 ### prepare the patch file
 
 The patch file must be **tab** delimited and contain the:
