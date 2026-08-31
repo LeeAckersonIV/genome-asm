@@ -16,8 +16,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # set env
-micromamba activate verkkov2.3.2
-verkko --version
+"${VERKKO_SOFTWARE}" --version
 if [[ -f "${PIPELINE_DIR}/env.bashrc" ]]; then
     source "${PIPELINE_DIR}/env.bashrc"
 else
@@ -29,8 +28,7 @@ fi
 # ------------------------------------------------------------------------------- #
 # set default flags minus kmers/trio
 VERKKO_CMD=(
-    verkko --slurm 
-	--snakeopts "--precommand 'micromamba run -p /mnt/ufs18/rs-015/qgg/software/micromamba/envs/verkkov2.3.2'"
+    "${VERKKO_SOFTWARE}" --slurm 
     -d "${VERKKO_ASM_OUTDIR}"
     --unitig-abundance 4
     --hifi "${CLEAN_HIFI_DIR}"/*.fastq.gz
