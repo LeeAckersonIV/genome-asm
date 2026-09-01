@@ -28,6 +28,8 @@ fi
 HIFIASM_CMD=(
     "${HIFIASM_SOFTWARE}"
 	--dual-scaf
+	--write-ec
+	--trio-dual
 	--telo-m TTAGGG
     -o "${HIFIASM_OUTDIR}"
     -t "${SLURM_CPUS_PER_TASK:-48}"
