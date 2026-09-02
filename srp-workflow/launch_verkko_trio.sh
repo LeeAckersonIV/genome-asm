@@ -16,7 +16,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 # set env
-"${VERKKO_SOFTWARE}" --version
 if [[ -f "${PIPELINE_DIR}/env.bashrc" ]]; then
     source "${PIPELINE_DIR}/env.bashrc"
 else
@@ -24,6 +23,7 @@ else
     exit 1
 fi
 
+"${VERKKO_SOFTWARE}" --version
 # execute verkko pipeline
 # ------------------------------------------------------------------------------- #
 # set default flags minus kmers/trio
