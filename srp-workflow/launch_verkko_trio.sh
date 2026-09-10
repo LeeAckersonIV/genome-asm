@@ -53,6 +53,6 @@ echo "Output Directory: ${VERKKO_ASM_OUTDIR}"
 echo "Full Command: ${VERKKO_CMD[@]}"
 echo "----------------------------------------------------------------"
 
-"${VERKKO_CMD[@]}"
+PYTHONNOUSERSITE=1 "${VERKKO_CMD[@]}"
 # ------------------------------------------------------------------------------- #
 
