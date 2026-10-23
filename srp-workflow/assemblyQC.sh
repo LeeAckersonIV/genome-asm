@@ -394,71 +394,72 @@ fi
 echo "Initiating Merqury QV Analysis..."
 export PATH="$MERYL_SOFTWARE:$MERQURY_SOFTWARE:$MERQURY_SOFTWARE/build:$PATH"
 
-## Hifiasm - Terminal
-mkdir -p "${QV_DIR}/hifiasm.terminal" && cd "${QV_DIR}/hifiasm.terminal"
-ln -sf "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
-ln -sf "${MERYL_HAP_MAT}" mat.meryl
-ln -sf "${MERYL_HAP_PAT}" pat.meryl
+run_merqury_qv() {
+	local meryl_read="$1"
+	local meryl_mat="$2"
+	local meryl_pat="$3"
+	local hap1_fasta="$4"
+	local hap2_fasta="$5"
+	local out_prefix="$6"
+	local out_dir="${QV_DIR}/${out_prefix}"
 
-"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-    illumina.meryl \
-    mat.meryl \
-    pat.meryl \
-    "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
-    "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
-    "${HIFIASM_OUTDIR}.terminal"
-cd "$PROJECT_ROOT"
+	mkdir -p "$out_dir"
 
-## Hifiasm - Maternal
+	# Submit SLURM job forcing working directory to out_dir via --chdir
+	sbatch --job-name="qv-${out_prefix}" \
+		--chdir="$out_dir" \
+		--cpus-per-task=16 \
+		--mem=64G \
+		--time=6:00:00 \
+		--output="${out_dir}/merqury.log" \
+		--wrap="
+			unset SLURM_SUBMIT_DIR
+			cd ${out_dir}
+			ln -sf ${meryl_read} illumina.meryl
+			ln -sf ${meryl_mat} mat.meryl
+			ln -sf ${meryl_pat} pat.meryl
+			ln -sf ${hap1_fasta} hap1.fasta
+			ln -sf ${hap2_fasta} hap2.fasta
+			${MERQURY_SOFTWARE}/merqury.sh illumina.meryl mat.meryl pat.meryl hap1.fasta hap2.fasta ${out_prefix}
+		"
+}
+
+# Terminal Assemblies
+run_merqury_qv \
+	"${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" \
+	"${MERYL_HAP_MAT}" \
+	"${MERYL_HAP_PAT}" \
+	"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+	"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
+	"hifiasm.terminal"
+
+run_merqury_qv \
+	"${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" \
+	"${MERYL_HAP_MAT}" \
+	"${MERYL_HAP_PAT}" \
+	"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+	"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
+	"verkko.terminal"
+
+# Maternal Assemblies (If 3-Generation Mode)
 if [[ "$ThreeGenMode" == "YES" ]]; then
-mkdir -p "${QV_DIR}/hifiasm.maternal" && cd "${QV_DIR}/hifiasm.maternal"
-ln -sf "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
-ln -sf "${MERYL_HAP_MGD}" mat.meryl
-ln -sf "${MERYL_HAP_MGS}" pat.meryl
+	run_merqury_qv \
+		"${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" \
+		"${MERYL_HAP_MGD}" \
+		"${MERYL_HAP_MGS}" \
+		"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+		"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
+		"hifiasm.maternal"
 
-"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-    illumina.meryl \
-    mat.meryl \
-    pat.meryl \
-    "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
-    "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
-    "${HIFIASM_OUTDIR}.maternal"
-cd "$PROJECT_ROOT"
+	run_merqury_qv \
+		"${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" \
+		"${MERYL_HAP_MGD}" \
+		"${MERYL_HAP_MGS}" \
+		"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+		"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
+		"verkko.maternal"
 fi
-
-## Verkko - Terminal
-mkdir -p "${QV_DIR}/verkko.terminal" && cd "${QV_DIR}/verkko.terminal"
-ln -sf "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
-ln -sf "${MERYL_HAP_MAT}" mat.meryl
-ln -sf "${MERYL_HAP_PAT}" pat.meryl
-
-"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-    illumina.meryl \
-    mat.meryl \
-    pat.meryl \
-    "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
-    "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
-    "${VERKKO_OUTDIR}.terminal"
-cd "$PROJECT_ROOT"
-
-## Verkko - Maternal
-if [[ "$ThreeGenMode" == "YES" ]]; then
-mkdir -p "${QV_DIR}/verkko.maternal" && cd "${QV_DIR}/verkko.maternal"
-ln -sf "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
-ln -sf "${MERYL_HAP_MGD}" mat.meryl
-ln -sf "${MERYL_HAP_MGS}" pat.meryl
-
-"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-    illumina.meryl \
-    mat.meryl \
-    pat.meryl \
-    "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
-    "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
-    "${VERKKO_OUTDIR}.maternal"
-cd "$PROJECT_ROOT"
-fi
-echo "Finishing Merqury QV Analysis..."
-
+echo "Finishing Merqury QV Submissions..."
 # ------------------------------------------------------------------------------- #
 
 # 4. Adaptor Presence (FCS-Adaptor)
