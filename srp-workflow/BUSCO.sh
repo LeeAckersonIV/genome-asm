@@ -32,7 +32,7 @@ busco --in "${ASM1}" \
 	--mode genome \
 	--lineage_dataset cetartiodactyla_odb10 \
 	--cpu 16 \
-	--out "${OUTDIR}/busco.hap1"
+	--out busco.hap1
 
 date
 
@@ -41,6 +41,6 @@ busco --in "${ASM2}" \
 	--mode genome \
 	--lineage_dataset cetartiodactyla_odb10 \
 	--cpu 16 \
-	--out "${OUTDIR}/busco.hap2"
+	--out busco.hap2
 
 date
