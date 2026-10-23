@@ -258,14 +258,15 @@ HIFIASM_TERM_DIR="${PROJECT_ROOT}/hifiasm.terminal"
 HIFIASM_MAT_DIR="${PROJECT_ROOT}/hifiasm.maternal"
 CLEAN_DATA="${PROJECT_ROOT}/data-cleaned"
 
-YAK_HAP_MAT="${YAK_DIR}/${ILLUM_MAT}.yak"
-YAK_HAP_PAT="${YAK_DIR}/${ILLUM_PAT}.yak"
-YAK_HAP_MGS="${YAK_DIR}/${ILLUM_MGS}.yak"
-YAK_HAP_MGD="${YAK_DIR}/${ILLUM_MGD}.yak"
-MERYL_HAP_MAT="${MERQURY_TERM_DIR}/${ILLUM_MAT}.hapmer.meryl"
-MERYL_HAP_PAT="${MERQURY_TERM_DIR}/${ILLUM_PAT}.hapmer.meryl"
-MERYL_HAP_MGS="${MERQURY_MAT_DIR}/${ILLUM_MGS}.hapmer.meryl"
-MERYL_HAP_MGD="${MERQURY_MAT_DIR}/${ILLUM_MGD}.hapmer.meryl"
+YAK_HAP_MAT="${YAK_HAP_MAT:-${YAK_DIR}/${ILLUM_MAT}.yak}"
+YAK_HAP_PAT="${YAK_HAP_PAT:-${YAK_DIR}/${ILLUM_PAT}.yak}"
+YAK_HAP_MGS="${YAK_HAP_MGS:-${YAK_DIR}/${ILLUM_MGS}.yak}"
+YAK_HAP_MGD="${YAK_HAP_MGD:-${YAK_DIR}/${ILLUM_MGD}.yak}"
+
+MERYL_HAP_MAT="${MERYL_HAP_MAT:-${MERQURY_TERM_DIR}/${ILLUM_MAT}.hapmer.meryl}"
+MERYL_HAP_PAT="${MERYL_HAP_PAT:-${MERQURY_TERM_DIR}/${ILLUM_PAT}.hapmer.meryl}"
+MERYL_HAP_MGS="${MERYL_HAP_MGS:-${MERQURY_MAT_DIR}/${ILLUM_MGS}.hapmer.meryl}"
+MERYL_HAP_MGD="${MERYL_HAP_MGD:-${MERQURY_MAT_DIR}/${ILLUM_MGD}.hapmer.meryl}"
 
 # new vars
 ASMQC_DIR="${PROJECT_ROOT}/assemblyQC" 
@@ -283,11 +284,18 @@ mkdir -p "${FCS_DIR}"
 mkdir -p "${FLAGGER_DIR}"
 
 # download reference genomes
-## Sscrofa11.1 [OLD REFERENCE]
-wget -O "${PIPELINE_DIR}/references/Sus_scrofa.Sscrofa11.1.dna_sm.toplevel.fa.gz" ftp://ftp.ensembl.org/pub/release-110/fasta/sus_scrofa/dna/Sus_scrofa.Sscrofa11.1.dna_sm.toplevel.fa.gz
-## HxYL [NEW REFERENCE]
-wget -O "${PIPELINE_DIR}/references/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz" https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/054/392/235/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz
+mkdir -p "${PIPELINE_DIR}/references"
 
+REF_SS11="${PIPELINE_DIR}/references/Sus_scrofa.Sscrofa11.1.dna_sm.toplevel.fa.gz"
+REF_HXYL="${PIPELINE_DIR}/references/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz"
+
+if [[ ! -f "$REF_SS11" ]]; then
+    wget -O "$REF_SS11" ftp://ftp.ensembl.org/pub/release-110/fasta/sus_scrofa/dna/Sus_scrofa.Sscrofa11.1.dna_sm.toplevel.fa.gz
+fi
+
+if [[ ! -f "$REF_HXYL" ]]; then
+    wget -O "$REF_HXYL" https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/054/392/235/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz
+fi
 # ------------------------------------------------------------------------------- #
 
 
@@ -295,29 +303,30 @@ wget -O "${PIPELINE_DIR}/references/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorksh
 # ------------------------------------------------------------------------------- #
 ## Hifiasm
 ### convert gfa to fasta
-awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap1.p_ctg.gfa" > "${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta"
-awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap2.p_ctg.gfa" > "${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta"
+awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa" > "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa" > "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
 
-awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap1.p_ctg.gfa" > "${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta"
-awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap2.p_ctg.gfa" > "${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta"
+awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa" > "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa" > "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
 
 ### launch QUAST
 sbatch --job-name=term-hifiasm-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
 	--output="${N50_DIR}/terminal.hifiasm.quast.log" "${PIPELINE_DIR}/N50.sh" \
 	--pipelineDir "${PIPELINE_DIR}" \
 	--outdir "${N50_DIR}/terminal.hifiasm.quast" \
-	--assembly1 "${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta" \
-	--assembly2 "${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta" \
+	--assembly1 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+	--assembly2 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
 	--reference "${PIPELINE_DIR}/references/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz"
 
+if [[ "$ThreeGenMode" == "YES" ]]; then
 sbatch --job-name=mat-hifiasm-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
 	--output="${N50_DIR}/maternal.hifiasm.quast.log" "${PIPELINE_DIR}/N50.sh" \
 	--pipelineDir "${PIPELINE_DIR}" \
 	--outdir "${N50_DIR}/maternal.hifiasm.quast" \
-	--assembly1 "${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta" \
-	--assembly2 "${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta" \
+	--assembly1 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+	--assembly2 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
 	--reference "${PIPELINE_DIR}/references/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz"
-
+fi
 			
 ## Verkko
 ### launch QUAST
@@ -325,17 +334,19 @@ sbatch --job-name=term-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 
 	--output="${N50_DIR}/terminal.verkko.quast.log" "${PIPELINE_DIR}/N50.sh" \
 	--pipelineDir "${PIPELINE_DIR}" \
 	--outdir "${N50_DIR}/terminal.verkko.quast" \
-	--assembly1 "${VERKKO_TERM_DIR}/verkko2.3.2_trio/assembly.haplotype1.fasta" \
-	--assembly2 "${VERKKO_TERM_DIR}/verkko2.3.2_trio/assembly.haplotype2.fasta" \
+	--assembly1 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+	--assembly2 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
 	--reference "${PIPELINE_DIR}/references/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz"
 
+if [[ "$ThreeGenMode" == "YES" ]]; then
 sbatch --job-name=mat-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
 	--output="${N50_DIR}/maternal.verkko.quast.log" "${PIPELINE_DIR}/N50.sh" \
 	--pipelineDir "${PIPELINE_DIR}" \
 	--outdir "${N50_DIR}/maternal.verkko.quast" \
-	--assembly1 "${VERKKO_MAT_DIR}/verkko2.3.2_trio/assembly.haplotype1.fasta" \
-	--assembly2 "${VERKKO_MAT_DIR}/verkko2.3.2_trio/assembly.haplotype2.fasta" \
+	--assembly1 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+	--assembly2 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
 	--reference "${PIPELINE_DIR}/references/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz"
+fi
 
 # ------------------------------------------------------------------------------- #
 
@@ -346,135 +357,106 @@ sbatch --job-name=term-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:0
 	--output="${BUSCO_DIR}/terminal.hifiasm.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
 	--pipelineDir "${PIPELINE_DIR}" \
 	--outdir "${BUSCO_DIR}/terminal.hifiasm.busco" \
-	--assembly1 "${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta" \
-	--assembly2 "${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta"
+	--assembly1 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+	--assembly2 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
 
+if [[ "$ThreeGenMode" == "YES" ]]; then
 sbatch --job-name=mat-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
 	--output="${BUSCO_DIR}/maternal.hifiasm.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
 	--pipelineDir "${PIPELINE_DIR}" \
 	--outdir "${BUSCO_DIR}/maternal.hifiasm.busco" \
-	--assembly1 "${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta" \
-	--assembly2 "${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta"
+	--assembly1 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+	--assembly2 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+fi
 
 ## Verkko
 sbatch --job-name=term-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
 	--output="${BUSCO_DIR}/terminal.verkko.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
 	--pipelineDir "${PIPELINE_DIR}" \
 	--outdir "${BUSCO_DIR}/terminal.verkko.busco" \
-	--assembly1 "${VERKKO_TERM_DIR}/verkko2.3.2_trio/assembly.haplotype1.fasta" \
-	--assembly2 "${VERKKO_TERM_DIR}/verkko2.3.2_trio/assembly.haplotype2.fasta"
+	--assembly1 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+	--assembly2 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
 
+if [[ "$ThreeGenMode" == "YES" ]]; then
 sbatch --job-name=mat-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
 	--output="${BUSCO_DIR}/maternal.verkko.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
 	--pipelineDir "${PIPELINE_DIR}" \
 	--outdir "${BUSCO_DIR}/maternal.verkko.busco" \
-	--assembly1 "${VERKKO_MAT_DIR}/verkko2.3.2_trio/assembly.haplotype1.fasta" \
-	--assembly2 "${VERKKO_MAT_DIR}/verkko2.3.2_trio/assembly.haplotype2.fasta"
+	--assembly1 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+	--assembly2 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
+fi
 
 # ------------------------------------------------------------------------------- #
+
 
 # 3. Correctness: QV (Meryl/Merqury)
 # ------------------------------------------------------------------------------- #
 echo "Initiating Merqury QV Analysis..."
 export PATH="$MERYL_SOFTWARE:$MERQURY_SOFTWARE:$MERQURY_SOFTWARE/build:$PATH"
 
-## Hifiasm
-mkdir -p "${QV_DIR}/hifiasm.terminal.hap1" && cd "${QV_DIR}/hifiasm.terminal.hap1" 
-ln -s "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
-ln -s "${MERYL_HAP_MAT}" mat.meryl
-ln -s "${MERYL_HAP_PAT}" pat.meryl
+## Hifiasm - Terminal
+mkdir -p "${QV_DIR}/hifiasm.terminal" && cd "${QV_DIR}/hifiasm.terminal"
+ln -sf "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
+ln -sf "${MERYL_HAP_MAT}" mat.meryl
+ln -sf "${MERYL_HAP_PAT}" pat.meryl
+
 "${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-	illumina.meryl \
-	mat.meryl \
-	pat.meryl \
-	"${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta" \
-	hifiasm.terminal.hap1
+    illumina.meryl \
+    mat.meryl \
+    pat.meryl \
+    "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+    "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
+    "${HIFIASM_OUTDIR}.terminal"
 cd "$PROJECT_ROOT"
 
-mkdir -p "${QV_DIR}/hifiasm.terminal.hap2" && cd "${QV_DIR}/hifiasm.terminal.hap2" 
-ln -s "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
-ln -s "${MERYL_HAP_MAT}" mat.meryl
-ln -s "${MERYL_HAP_PAT}" pat.meryl
+## Hifiasm - Maternal
+if [[ "$ThreeGenMode" == "YES" ]]; then
+mkdir -p "${QV_DIR}/hifiasm.maternal" && cd "${QV_DIR}/hifiasm.maternal"
+ln -sf "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
+ln -sf "${MERYL_HAP_MGD}" mat.meryl
+ln -sf "${MERYL_HAP_MGS}" pat.meryl
+
 "${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-	illumina.meryl \
-	mat.meryl \
-	pat.meryl \
-	"${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta" \
-	hifiasm.terminal.hap2
+    illumina.meryl \
+    mat.meryl \
+    pat.meryl \
+    "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+    "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
+    "${HIFIASM_OUTDIR}.maternal"
+cd "$PROJECT_ROOT"
+fi
+
+## Verkko - Terminal
+mkdir -p "${QV_DIR}/verkko.terminal" && cd "${QV_DIR}/verkko.terminal"
+ln -sf "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
+ln -sf "${MERYL_HAP_MAT}" mat.meryl
+ln -sf "${MERYL_HAP_PAT}" pat.meryl
+
+"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
+    illumina.meryl \
+    mat.meryl \
+    pat.meryl \
+    "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+    "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
+    "${VERKKO_OUTDIR}.terminal"
 cd "$PROJECT_ROOT"
 
-mkdir -p "${QV_DIR}/hifiasm.maternal.hap1" && cd "${QV_DIR}/hifiasm.maternal.hap1" 
-ln -s "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
-ln -s "${MERYL_HAP_MGD}" mat.meryl
-ln -s "${MERYL_HAP_MGS}" pat.meryl
-"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-	illumina.meryl \
-	mat.meryl \
-	pat.meryl \
-	"${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta" \
-	hifiasm.maternal.hap1
-cd "$PROJECT_ROOT"
+## Verkko - Maternal
+if [[ "$ThreeGenMode" == "YES" ]]; then
+mkdir -p "${QV_DIR}/verkko.maternal" && cd "${QV_DIR}/verkko.maternal"
+ln -sf "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
+ln -sf "${MERYL_HAP_MGD}" mat.meryl
+ln -sf "${MERYL_HAP_MGS}" pat.meryl
 
-mkdir -p "${QV_DIR}/hifiasm.maternal.hap2" && cd "${QV_DIR}/hifiasm.maternal.hap2" 
-ln -s "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
-ln -s "${MERYL_HAP_MGD}" mat.meryl
-ln -s "${MERYL_HAP_MGS}" pat.meryl
 "${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-	illumina.meryl \
-	mat.meryl \
-	pat.meryl \
-	"${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta" \
-	hifiasm.maternal.hap2
+    illumina.meryl \
+    mat.meryl \
+    pat.meryl \
+    "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+    "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
+    "${VERKKO_OUTDIR}.maternal"
 cd "$PROJECT_ROOT"
-
-## Verkko
-mkdir -p "${QV_DIR}/verkko.terminal.hap1" && cd "${QV_DIR}/verkko.terminal.hap1" 
-ln -s "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
-ln -s "${MERYL_HAP_MAT}" mat.meryl
-ln -s "${MERYL_HAP_PAT}" pat.meryl
-"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-	illumina.meryl \
-	mat.meryl \
-	pat.meryl \
-	"${VERKKO_TERM_DIR}/verkko2.3.2_trio/assembly.haplotype1.fasta" \
-	verkko.terminal.hap1
-cd "$PROJECT_ROOT"
-
-mkdir -p "${QV_DIR}/verkko.terminal.hap2" && cd "${QV_DIR}/verkko.terminal.hap2" 
-ln -s "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
-ln -s "${MERYL_HAP_MAT}" mat.meryl
-ln -s "${MERYL_HAP_PAT}" pat.meryl
-"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-	illumina.meryl \
-	mat.meryl \
-	pat.meryl \
-	"${VERKKO_TERM_DIR}/verkko2.3.2_trio/assembly.haplotype2.fasta" \
-	verkko.terminal.hap2
-cd "$PROJECT_ROOT"
-
-mkdir -p "${QV_DIR}/verkko.maternal.hap1" && cd "${QV_DIR}/verkko.maternal.hap1" 
-ln -s "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
-ln -s "${MERYL_HAP_MGD}" mat.meryl
-ln -s "${MERYL_HAP_MGS}" pat.meryl
-"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-	illumina.meryl \
-	mat.meryl \
-	pat.meryl \
-	"${VERKKO_MAT_DIR}/verkko2.3.2_trio/assembly.haplotype1.fasta" \
-	verkko.maternal.hap1
-cd "$PROJECT_ROOT"
-
-mkdir -p "${QV_DIR}/verkko.maternal.hap2" && cd "${QV_DIR}/verkko.maternal.hap2" 
-ln -s "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
-ln -s "${MERYL_HAP_MGD}" mat.meryl
-ln -s "${MERYL_HAP_MGS}" pat.meryl
-"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
-	illumina.meryl \
-	mat.meryl \
-	pat.meryl \
-	"${VERKKO_MAT_DIR}/verkko2.3.2_trio/assembly.haplotype2.fasta" \
-	verkko.maternal.hap2
-cd "$PROJECT_ROOT"
+fi
 echo "Finishing Merqury QV Analysis..."
 
 # ------------------------------------------------------------------------------- #
