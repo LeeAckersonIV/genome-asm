@@ -26,6 +26,7 @@ fi
 date
 module load QUAST/5.2.0 #MSU
 
+mkdir -p "${OUTDIR}"
 quast -o "${OUTDIR}" -r "${REF}" "${ASM1}" "${ASM2}"
 
 date

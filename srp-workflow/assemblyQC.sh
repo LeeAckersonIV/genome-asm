@@ -342,13 +342,141 @@ sbatch --job-name=mat-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
 # 2. Completeness: BUSCO
 # ------------------------------------------------------------------------------- #
 ## Hifiasm
+sbatch --job-name=term-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
+	--output="${BUSCO_DIR}/terminal.hifiasm.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
+	--pipelineDir "${PIPELINE_DIR}" \
+	--outdir "${BUSCO_DIR}/terminal.hifiasm.busco" \
+	--assembly1 "${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta" \
+	--assembly2 "${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta"
+
+sbatch --job-name=mat-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
+	--output="${BUSCO_DIR}/maternal.hifiasm.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
+	--pipelineDir "${PIPELINE_DIR}" \
+	--outdir "${BUSCO_DIR}/maternal.hifiasm.busco" \
+	--assembly1 "${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta" \
+	--assembly2 "${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta"
+
 ## Verkko
+sbatch --job-name=term-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
+	--output="${BUSCO_DIR}/terminal.verkko.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
+	--pipelineDir "${PIPELINE_DIR}" \
+	--outdir "${BUSCO_DIR}/terminal.verkko.busco" \
+	--assembly1 "${VERKKO_TERM_DIR}/verkko2.3.2_trio/assembly.haplotype1.fasta" \
+	--assembly2 "${VERKKO_TERM_DIR}/verkko2.3.2_trio/assembly.haplotype2.fasta"
+
+sbatch --job-name=mat-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
+	--output="${BUSCO_DIR}/maternal.verkko.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
+	--pipelineDir "${PIPELINE_DIR}" \
+	--outdir "${BUSCO_DIR}/maternal.verkko.busco" \
+	--assembly1 "${VERKKO_MAT_DIR}/verkko2.3.2_trio/assembly.haplotype1.fasta" \
+	--assembly2 "${VERKKO_MAT_DIR}/verkko2.3.2_trio/assembly.haplotype2.fasta"
+
 # ------------------------------------------------------------------------------- #
 
 # 3. Correctness: QV (Meryl/Merqury)
 # ------------------------------------------------------------------------------- #
+echo "Initiating Merqury QV Analysis..."
+export PATH="$MERYL_SOFTWARE:$MERQURY_SOFTWARE:$MERQURY_SOFTWARE/build:$PATH"
+
 ## Hifiasm
+mkdir -p "${QV_DIR}/hifiasm.terminal.hap1" && cd "${QV_DIR}/hifiasm.terminal.hap1" 
+ln -s "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
+ln -s "${MERYL_HAP_MAT}" mat.meryl
+ln -s "${MERYL_HAP_PAT}" pat.meryl
+"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
+	illumina.meryl \
+	mat.meryl \
+	pat.meryl \
+	"${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta" \
+	hifiasm.terminal.hap1
+cd "$PROJECT_ROOT"
+
+mkdir -p "${QV_DIR}/hifiasm.terminal.hap2" && cd "${QV_DIR}/hifiasm.terminal.hap2" 
+ln -s "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
+ln -s "${MERYL_HAP_MAT}" mat.meryl
+ln -s "${MERYL_HAP_PAT}" pat.meryl
+"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
+	illumina.meryl \
+	mat.meryl \
+	pat.meryl \
+	"${HIFIASM_TERM_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta" \
+	hifiasm.terminal.hap2
+cd "$PROJECT_ROOT"
+
+mkdir -p "${QV_DIR}/hifiasm.maternal.hap1" && cd "${QV_DIR}/hifiasm.maternal.hap1" 
+ln -s "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
+ln -s "${MERYL_HAP_MGD}" mat.meryl
+ln -s "${MERYL_HAP_MGS}" pat.meryl
+"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
+	illumina.meryl \
+	mat.meryl \
+	pat.meryl \
+	"${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap1.p_ctg.fasta" \
+	hifiasm.maternal.hap1
+cd "$PROJECT_ROOT"
+
+mkdir -p "${QV_DIR}/hifiasm.maternal.hap2" && cd "${QV_DIR}/hifiasm.maternal.hap2" 
+ln -s "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
+ln -s "${MERYL_HAP_MGD}" mat.meryl
+ln -s "${MERYL_HAP_MGS}" pat.meryl
+"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
+	illumina.meryl \
+	mat.meryl \
+	pat.meryl \
+	"${HIFIASM_MAT_DIR}/hifiasm_trio.dip.hap2.p_ctg.fasta" \
+	hifiasm.maternal.hap2
+cd "$PROJECT_ROOT"
+
 ## Verkko
+mkdir -p "${QV_DIR}/verkko.terminal.hap1" && cd "${QV_DIR}/verkko.terminal.hap1" 
+ln -s "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
+ln -s "${MERYL_HAP_MAT}" mat.meryl
+ln -s "${MERYL_HAP_PAT}" pat.meryl
+"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
+	illumina.meryl \
+	mat.meryl \
+	pat.meryl \
+	"${VERKKO_TERM_DIR}/verkko2.3.2_trio/assembly.haplotype1.fasta" \
+	verkko.terminal.hap1
+cd "$PROJECT_ROOT"
+
+mkdir -p "${QV_DIR}/verkko.terminal.hap2" && cd "${QV_DIR}/verkko.terminal.hap2" 
+ln -s "${MERQURY_TERM_DIR}/${ILLUM_TERM}.meryl" illumina.meryl
+ln -s "${MERYL_HAP_MAT}" mat.meryl
+ln -s "${MERYL_HAP_PAT}" pat.meryl
+"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
+	illumina.meryl \
+	mat.meryl \
+	pat.meryl \
+	"${VERKKO_TERM_DIR}/verkko2.3.2_trio/assembly.haplotype2.fasta" \
+	verkko.terminal.hap2
+cd "$PROJECT_ROOT"
+
+mkdir -p "${QV_DIR}/verkko.maternal.hap1" && cd "${QV_DIR}/verkko.maternal.hap1" 
+ln -s "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
+ln -s "${MERYL_HAP_MGD}" mat.meryl
+ln -s "${MERYL_HAP_MGS}" pat.meryl
+"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
+	illumina.meryl \
+	mat.meryl \
+	pat.meryl \
+	"${VERKKO_MAT_DIR}/verkko2.3.2_trio/assembly.haplotype1.fasta" \
+	verkko.maternal.hap1
+cd "$PROJECT_ROOT"
+
+mkdir -p "${QV_DIR}/verkko.maternal.hap2" && cd "${QV_DIR}/verkko.maternal.hap2" 
+ln -s "${MERQURY_MAT_DIR}/${ILLUM_MAT}.meryl" illumina.meryl
+ln -s "${MERYL_HAP_MGD}" mat.meryl
+ln -s "${MERYL_HAP_MGS}" pat.meryl
+"${MERQURY_SOFTWARE}/_submit_merqury.sh" \
+	illumina.meryl \
+	mat.meryl \
+	pat.meryl \
+	"${VERKKO_MAT_DIR}/verkko2.3.2_trio/assembly.haplotype2.fasta" \
+	verkko.maternal.hap2
+cd "$PROJECT_ROOT"
+echo "Finishing Merqury QV Analysis..."
+
 # ------------------------------------------------------------------------------- #
 
 # 4. Adaptor Presence (FCS-Adaptor)
@@ -364,6 +492,12 @@ sbatch --job-name=mat-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
 # ------------------------------------------------------------------------------- #
 
 # 6. Flagger
+# ------------------------------------------------------------------------------- #
+## Hifiasm
+## Verkko
+# ------------------------------------------------------------------------------- #
+
+# 7. T2T Stats
 # ------------------------------------------------------------------------------- #
 ## Hifiasm
 ## Verkko
