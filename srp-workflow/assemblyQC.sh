@@ -481,6 +481,94 @@ echo "Finishing Merqury QV Analysis..."
 
 # 7. T2T Stats
 # ------------------------------------------------------------------------------- #
-## Hifiasm
-## Verkko
+echo "Calculating T2T Metrics & Summarizing Assemblies..."
+T2T_DIR="${ASMQC_DIR}/T2T"
+mkdir -p "$T2T_DIR"
+
+# identify & collate assemblies
+TARGET_FASTAS=(
+	"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+	"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+	"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta"
+	"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
+)
+
+if [[ "$ThreeGenMode" == "YES" ]]; then
+	TARGET_FASTAS+=(
+		"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+		"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+		"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta"
+		"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
+	)
+fi
+
+# verify assemblies exist
+VALID_FASTAS=()
+for fasta in "${TARGET_FASTAS[@]}"; do
+	if [[ -f "$fasta" ]]; then
+		VALID_FASTAS+=("$fasta")
+	fi
+done
+
+if [[ ${#VALID_FASTAS[@]} -eq 0 ]]; then
+	echo "Error: No valid assembly FASTA files found for T2T analysis."
+	exit 1
+fi
+
+# launch T2T evaluation job
+sbatch --job-name="t2t-stats" --cpus-per-task=8 --mem=50G --time=4:00:00 \
+	--output="${T2T_DIR}/t2t_stats.log" \
+	--wrap="
+		module load SAMtools
+		# General seqkit summary stats
+		${SEQKIT_SOFTWARE}/seqkit stats -j 8 -a ${VALID_FASTAS[*]} > ${T2T_DIR}/summary_assembly_stats.tsv
+
+		# Header for final summary table
+		echo -e 'Assembly\tTotal_Contigs\tT2T_Contigs' > ${T2T_DIR}/t2t_summary.tsv
+
+		# Threshold distance from contig ends (10 kb)
+		THRESHOLD=50000
+
+		for fasta in ${VALID_FASTAS[*]}; do
+			asm_name=\$(basename \"\$fasta\")
+			fai_file=\"\${fasta}.fai\"
+			loc_file=\"${T2T_DIR}/\${asm_name}.telomeres.bed\"
+
+			# A. Generate .fai index if missing
+			if [[ ! -f \"\$fai_file\" ]]; then
+				samtools faidx \"\$fasta\"
+			fi
+
+			# B. Search both forward and reverse telomeres in one pass (-b outputs BED format)
+			${SEQKIT_SOFTWARE}/seqkit locate -j 8 -i -b -p 'TTAGGG' -p 'CCCTAA' \"\$fasta\" > \"\$loc_file\"
+
+			# C. AWK script: cross-reference BED matches with .fai sequence lengths
+			read tot_cnt t2t_cnt <<< \$(awk -v thresh=\"\$THRESHOLD\" '
+				# Pass 1: Read .fai file to store contig lengths
+				NR==FNR {
+					len[\$1] = \$2;
+					next;
+				}
+				# Pass 2: Process telomere BED file matches
+				\$1 !~ /^#/ && \$1 !~ /^seqid/ {
+					seqid = \$1; start = \$2; end = \$3;
+					if (seqid in len) {
+						if (start <= thresh)                  has_5p[seqid] = 1;
+						if (end >= (len[seqid] - thresh))     has_3p[seqid] = 1;
+					}
+				}
+				# End: Count true T2T contigs (having both 5p and 3p telomeres)
+				END {
+					tot = 0; t2t = 0;
+					for (s in len) {
+						tot++;
+						if (has_5p[s] && has_3p[s]) t2t++;
+					}
+					print tot, t2t;
+				}
+			' \"\$fai_file\" \"\$loc_file\")
+
+			echo -e \"\${asm_name}\t\${tot_cnt}\t\${t2t_cnt}\" >> ${T2T_DIR}/t2t_summary.tsv
+		done
+	"
 # ------------------------------------------------------------------------------- #
