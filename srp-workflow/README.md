@@ -65,5 +65,8 @@ tail -f filter.log
 # Run assembly.sh
 ${SRP_WORKFLOW}/assembly.sh --projectROOT SRP_1 --load.project.params YES --verkko.outdir.name verkko2.3.2_trio --hifiasm.outdir.name hifiasm_trio &> assembly.log
 
+# Run assemblyQC.sh
+${SRP_WORKFLOW}/assemblyQC.sh --projectROOT SRP_1 --load.project.params YES --verkko.outdir.name verkko2.3.2_trio --hifiasm.outdir.name hifiasm_trio &> assembly.log
+
 ```
 
