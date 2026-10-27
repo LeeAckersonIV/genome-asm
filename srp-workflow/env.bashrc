@@ -67,4 +67,35 @@ fi
 
 pip install pandas matplotlib seaborn
 # ----------------------------------------------------------------------------------------------- #
+
+
+# Global Functions
+# ----------------------------------------------------------------------------------------------- #
+resolve_files() {
+    local lib_csv="$1"
+    local search_dir="$2"
+    local resolved=()
+
+    if [[ -z "$lib_csv" || "$lib_csv" == "NA" ]]; then
+        echo ""
+        return 0
+    fi
+
+    IFS=',' read -r -a lib_array <<< "$lib_csv"
+    for lib in "${lib_array[@]}"; do
+        lib=$(echo "$lib" | xargs) # trim whitespace
+        while IFS= read -r match; do
+            [[ -n "$match" ]] && resolved+=("$match")
+        done < <(find -L "$search_dir" -type f \( -name "*${lib}*.fastq.gz" -o -name "*${lib}*.fq.gz" -o -name "*${lib}*.bam" \) 2>/dev/null)
+    done
+
+    if [[ ${#resolved[@]} -eq 0 ]]; then
+        echo "Error: No sequence files matching library list [${lib_csv}] found in ${search_dir}" >&2
+        return 1
+    fi
+
+    echo "${resolved[*]}"
+}
+
+# ----------------------------------------------------------------------------------------------- #
 # =============================================================================================== #

@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------------------------------- #
 # initialize.sh \
 #	--projectROOT \ 			# where directory strcuture will be built, default is working dir
-#	--illumina.terminal.lib \  	# library IDs for terminal animal illumina data
+#	--illumina.terminal.lib \  	# library IDs for terminal animal illumina data (several IDs passed as quoted comma seperated string {"LIBXXX,LIBXXX"})
 #	--illumina.maternal.lib \ 	# library IDs for maternal animal [F1] illumina data
 #	--illumina.paternal.lib \ 	# library IDs for paternal animal illumina data
 # 	--illumina.MGS.lib \ 		# library IDs for maternal grand sire [MGS] animal illumina data
@@ -92,6 +92,7 @@ ILLUM_MGS="NA"
 ILLUM_MGD="NA"
 ONT_TERM="NA"
 ONT_MAT="NA"
+SNP_DIR="NA"
 
 # global variables
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -259,33 +260,48 @@ fi
 # ----------------------------------------------------------------------------------------------- #
 
 
+# Generate clean tags for instances where several LIBIDs supplied for one individual
+# ----------------------------------------------------------------------------------------------- #
+ILLUM_TERM_TAG="${ILLUM_TERM//,/_}"
+ILLUM_MAT_TAG="${ILLUM_MAT//,/_}"
+ILLUM_PAT_TAG="${ILLUM_PAT//,/_}"
+ILLUM_MGS_TAG="${ILLUM_MGS//,/_}"
+ILLUM_MGD_TAG="${ILLUM_MGD//,/_}"
+
+HIFI_TERM_TAG="${HIFI_TERM//,/_}"
+HIFI_MAT_TAG="${HIFI_MAT//,/_}"
+ONT_TERM_TAG="${ONT_TERM//,/_}"
+ONT_MAT_TAG="${ONT_MAT//,/_}"
+# ----------------------------------------------------------------------------------------------- #
+
+
 # Find and Symlink input fastq files into "data" directory
 # ----------------------------------------------------------------------------------------------- #
-# illumina fastq files
-Term_Illumina_Reads=($(find "$ILLUM_DIR" -name "*${ILLUM_TERM}*" | sort))
+# Illumina fastq files
+Term_Illumina_Reads=($(resolve_files "$ILLUM_TERM" "$ILLUM_DIR"))
 for file in "${Term_Illumina_Reads[@]}"; do
-    ln -sf "$file" "${PROJECT_ROOT}/data/illumina.terminal/"
+    [[ -f "$file" ]] && ln -sf "$file" "${PROJECT_ROOT}/data/illumina.terminal/"
 done
 
-Mat_Illumina_Reads=($(find "$ILLUM_DIR" -name "*${ILLUM_MAT}*" | sort))
+Mat_Illumina_Reads=($(resolve_files "$ILLUM_MAT" "$ILLUM_DIR"))
 for file in "${Mat_Illumina_Reads[@]}"; do
-    ln -sf "$file" "${PROJECT_ROOT}/data/illumina.maternal/"
+    [[ -f "$file" ]] && ln -sf "$file" "${PROJECT_ROOT}/data/illumina.maternal/"
 done
 
-Pat_Illumina_Reads=($(find "$ILLUM_DIR" -name "*${ILLUM_PAT}*" | sort))
+Pat_Illumina_Reads=($(resolve_files "$ILLUM_PAT" "$ILLUM_DIR"))
 for file in "${Pat_Illumina_Reads[@]}"; do
-    ln -sf "$file" "${PROJECT_ROOT}/data/illumina.paternal/"
+    [[ -f "$file" ]] && ln -sf "$file" "${PROJECT_ROOT}/data/illumina.paternal/"
 done
 
-if [[ "$ILLUM_MGD" != "NA" || "$ILLUM_MGS" != "NA" ]]; then # only if supplied
-	MGD_Illumina_Reads=($(find "$ILLUM_DIR" -name "*${ILLUM_MGD}*" | sort))
+if [[ "$ILLUM_MGD" != "NA" || "$ILLUM_MGS" != "NA" ]]; then
+	MGD_Illumina_Reads=($(resolve_files "$ILLUM_MGD" "$ILLUM_DIR"))
 	for file in "${MGD_Illumina_Reads[@]}"; do
-	    ln -sf "$file" "${PROJECT_ROOT}/data/illumina.MGD/"
+	    [[ -f "$file" ]] && ln -sf "$file" "${PROJECT_ROOT}/data/illumina.MGD/"
 	done
 	
-	MGS_Illumina_Reads=($(find "$ILLUM_DIR" -name "*${ILLUM_MGS}*" | sort))
+	MGS_Illumina_Reads=($(resolve_files "$ILLUM_MGS" "$ILLUM_DIR"))
 	for file in "${MGS_Illumina_Reads[@]}"; do
-	    ln -sf "$file" "${PROJECT_ROOT}/data/illumina.MGS/"
+	    [[ -f "$file" ]] && ln -sf "$file" "${PROJECT_ROOT}/data/illumina.MGS/"
 	done
 else
 	echo "Grandparent sequence data was not supplied; skipping related symlinking."
@@ -293,56 +309,52 @@ fi
 
 echo ""
 echo "Identified and symlinked the following illumina fastq files:"
-echo "Terminal is: ${Term_Illumina_Reads[@]}"
-echo "Maternal is: ${Mat_Illumina_Reads[@]}"
-echo "Paternal is: ${Pat_Illumina_Reads[@]}"
+echo "Terminal is: ${Term_Illumina_Reads[*]}"
+echo "Maternal is: ${Mat_Illumina_Reads[*]}"
+echo "Paternal is: ${Pat_Illumina_Reads[*]}"
 
 if [[ "$ThreeGenMode" == "YES" ]]; then
-echo "MGS is: ${MGS_Illumina_Reads[@]}" #if supplied
-echo "MGD is: ${MGD_Illumina_Reads[@]}" #if supplied
+    echo "MGS is: ${MGS_Illumina_Reads[*]}"
+    echo "MGD is: ${MGD_Illumina_Reads[*]}"
 fi
 echo ""
 
-# hifi fastq files
-HIFI_TERM_Reads=($(find "$HIFI_DIR" -name "*${HIFI_TERM}*"))
+# HiFi fastq files
+HIFI_TERM_Reads=($(resolve_files "$HIFI_TERM" "$HIFI_DIR"))
 for file in "${HIFI_TERM_Reads[@]}"; do
-    ln -sf "$file" "${PROJECT_ROOT}/data/hifi.terminal/"
+    [[ -f "$file" ]] && ln -sf "$file" "${PROJECT_ROOT}/data/hifi.terminal/"
 done
 
 if [[ "$HIFI_MAT" != "NA" ]]; then
-    HIFI_MAT_Reads=($(find "$HIFI_DIR" -name "*${HIFI_MAT}*"))
+    HIFI_MAT_Reads=($(resolve_files "$HIFI_MAT" "$HIFI_DIR"))
     for file in "${HIFI_MAT_Reads[@]}"; do
-        ln -sf "$file" "${PROJECT_ROOT}/data/hifi.maternal/"
+        [[ -f "$file" ]] && ln -sf "$file" "${PROJECT_ROOT}/data/hifi.maternal/"
     done
 else
-    HIFI_MAT_Reads="Not Supplied"
+    HIFI_MAT_Reads=("Not Supplied")
 fi
 
 echo ""
 echo "Identified and symlinked the following HiFi fastq files:"
-echo "HIFI_TERM is: ${HIFI_TERM_Reads[@]}"
-echo "HIFI_MAT is:	${HIFI_MAT_Reads[@]}"
+echo "HIFI_TERM is: ${HIFI_TERM_Reads[*]}"
+echo "HIFI_MAT is:  ${HIFI_MAT_Reads[*]}"
 echo ""
 
-# ont fastq files [IF SUPPLIED]
+# ONT fastq files [IF SUPPLIED]
 if [[ "$ONT_TERM" != "NA" || "$ONT_MAT" != "NA" ]]; then
-    
-    # terminal ONT [IF SUPPLIED]
 	if [[ "$ONT_TERM" != "NA" ]]; then
-	    ONT_TERM_Reads=($(find "$ONT_DIR" -name "*${ONT_TERM}*"))
+	    ONT_TERM_Reads=($(resolve_files "$ONT_TERM" "$ONT_DIR"))
 	    for file in "${ONT_TERM_Reads[@]}"; do
-	        ln -sf "$file" "${PROJECT_ROOT}/data/ont.terminal/"
+	        [[ -f "$file" ]] && ln -sf "$file" "${PROJECT_ROOT}/data/ont.terminal/"
 	    done
 	fi
 
-    # maternal ONT [IF SUPPLIED]
 	if [[ "$ONT_MAT" != "NA" ]]; then
-	    ONT_MAT_Reads=($(find "$ONT_DIR" -name "*${ONT_MAT}*"))
+	    ONT_MAT_Reads=($(resolve_files "$ONT_MAT" "$ONT_DIR"))
 	    for file in "${ONT_MAT_Reads[@]}"; do
-	        ln -sf "$file" "${PROJECT_ROOT}/data/ont.maternal/"
+	        [[ -f "$file" ]] && ln -sf "$file" "${PROJECT_ROOT}/data/ont.maternal/"
 	    done
 	fi
-
 else 
     echo "ONT sequence data was not supplied; skipping ONT symlinking."
 fi
@@ -376,7 +388,7 @@ HIFI_DIR="$HIFI_DIR"
 ONT_DIR="$ONT_DIR"
 SNP_DIR="$SNP_DIR"
 
-# Library IDs
+# Library IDs (Raw CSV string format)
 ILLUM_TERM="$ILLUM_TERM"
 ILLUM_MAT="$ILLUM_MAT"
 ILLUM_PAT="$ILLUM_PAT"
@@ -386,6 +398,17 @@ HIFI_TERM="$HIFI_TERM"
 HIFI_MAT="$HIFI_MAT"
 ONT_TERM="$ONT_TERM"
 ONT_MAT="$ONT_MAT"
+
+# Clean Tags (Safe Strings for DBs and Directories)
+ILLUM_TERM_TAG="$ILLUM_TERM_TAG"
+ILLUM_MAT_TAG="$ILLUM_MAT_TAG"
+ILLUM_PAT_TAG="$ILLUM_PAT_TAG"
+ILLUM_MGS_TAG="$ILLUM_MGS_TAG"
+ILLUM_MGD_TAG="$ILLUM_MGD_TAG"
+HIFI_TERM_TAG="$HIFI_TERM_TAG"
+HIFI_MAT_TAG="$HIFI_MAT_TAG"
+ONT_TERM_TAG="$ONT_TERM_TAG"
+ONT_MAT_TAG="$ONT_MAT_TAG"
 
 # Software & Settings
 ThreeGenMode="$ThreeGenMode"
