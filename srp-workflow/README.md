@@ -5,6 +5,7 @@
 ### 3. kmers.sh
 ### 4. filter.sh
 ### 5. assembly.sh
+### 6. assembly-metrics.sh
 
 ---
 
@@ -41,8 +42,8 @@ cd /mnt/gs21/scratch/ackers24/srp-sandbox
     --illumina.paternal.lib LIB212041 \
     --illumina.MGS.lib LIB212046 \
     --illumina.MGD.lib LIB212044 \
-    --hifi.terminal.lib LIB212031 \
-    --hifi.maternal.lib LIB212951
+    --hifi.terminal.lib "LIB212031,LIB215030" \
+    --hifi.maternal.lib "LIB212951,LIB215570"
 
 # Run readQC.sh
 sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
