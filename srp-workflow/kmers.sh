@@ -268,8 +268,9 @@ done
 # ----------------------------------------------------------------------------------------------- #
 echo "Modeling K-mer distributions with GenomeScope 2.0..."
 
-eval "$(micromamba shell hook --shell bash)"
-micromamba activate genomescope2
+# Redirect temp file creation away from node /tmp to avoid permission blocks
+export TMPDIR="${PROJECT_ROOT}/tmp"
+mkdir -p "$TMPDIR"
 
 for role in "${TARGET_ROLES[@]}"; do
     case "$role" in
@@ -283,12 +284,14 @@ for role in "${TARGET_ROLES[@]}"; do
     if [[ "$tag" != "NA" && -f "${MERYL_DIR}/${tag}.hist" ]]; then
         echo "Processing GenomeScope for $tag..."
         mkdir -p "${GS_OUT}/${tag}"
-        echo "+ Rscript $GENOMESCOPE2_SOFTWARE -i ${MERYL_DIR}/${tag}.hist -k $KMER_LENGTH -p 2 -o ${GS_OUT}/${tag}"
-        Rscript "$GENOMESCOPE2_SOFTWARE" -i "${MERYL_DIR}/${tag}.hist" -k "$KMER_LENGTH" -p 2 -o "${GS_OUT}/${tag}"
+        echo "+ micromamba run -n genomescope2 Rscript $GENOMESCOPE2_SOFTWARE -i ${MERYL_DIR}/${tag}.hist -k $KMER_LENGTH -p 2 -o ${GS_OUT}/${tag}"
+        micromamba run -n genomescope2 Rscript "$GENOMESCOPE2_SOFTWARE" \
+            -i "${MERYL_DIR}/${tag}.hist" \
+            -k "$KMER_LENGTH" \
+            -p 2 \
+            -o "${GS_OUT}/${tag}"
     fi
 done
-
-micromamba deactivate
 # ----------------------------------------------------------------------------------------------- #
 
 
@@ -382,8 +385,10 @@ for role in "${TARGET_ROLES[@]}"; do
         readarray -t illum_files < <(find -L "$dir" -type f \( -name "*.fastq.gz" -o -name "*.fq.gz" \))
         if [[ ${#illum_files[@]} -gt 0 ]]; then
             echo "Generating Yak hash for role [$role] (Tag: $tag)..."
-            echo "+ ${YAK_SOFTWARE} count -k31 -t16 -b37 -o ${YAK_DIR}/${tag}.yak <(zcat ${illum_files[*]})"
-            "${YAK_SOFTWARE}" count -k31 -t16 -b37 -o "${YAK_DIR}/${tag}.yak" <(zcat "${illum_files[@]}")
+            echo "+ ${YAK_SOFTWARE} count -k31 -t16 -b37 -o ${YAK_DIR}/${tag}.yak <(zcat ${illum_files[*]}) <(zcat ${illum_files[*]})"
+            "${YAK_SOFTWARE}" count -k31 -t16 -b37 -o "${YAK_DIR}/${tag}.yak" \
+                <(zcat "${illum_files[@]}") \
+                <(zcat "${illum_files[@]}")
         else
             echo "WARNING: No Illumina files found in $dir for Yak hash ($tag)"
         fi

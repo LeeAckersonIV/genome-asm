@@ -245,8 +245,23 @@ fi
 # ----------------------------------------------------------------------------------------------- #
 
 
+# Compute sanitized tags (fallback if running assembly.sh standalone without params.config)
+# ----------------------------------------------------------------------------------------------- #
+ILLUM_TERM_TAG="${ILLUM_TERM_TAG:-${ILLUM_TERM//,/_}}"
+ILLUM_MAT_TAG="${ILLUM_MAT_TAG:-${ILLUM_MAT//,/_}}"
+ILLUM_PAT_TAG="${ILLUM_PAT_TAG:-${ILLUM_PAT//,/_}}"
+ILLUM_MGS_TAG="${ILLUM_MGS_TAG:-${ILLUM_MGS//,/_}}"
+ILLUM_MGD_TAG="${ILLUM_MGD_TAG:-${ILLUM_MGD//,/_}}"
+
+HIFI_TERM_TAG="${HIFI_TERM_TAG:-${HIFI_TERM//,/_}}"
+HIFI_MAT_TAG="${HIFI_MAT_TAG:-${HIFI_MAT//,/_}}"
+ONT_TERM_TAG="${ONT_TERM_TAG:-${ONT_TERM//,/_}}"
+ONT_MAT_TAG="${ONT_MAT_TAG:-${ONT_MAT//,/_}}"
+# ----------------------------------------------------------------------------------------------- #
+
+
 # 0. Initialize variables & directory paths 
-# ------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------------------- #
 PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
 MERQURY_TERM_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_terminal.compressed" 
 MERQURY_MAT_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_maternal.compressed" 
@@ -258,70 +273,82 @@ HIFIASM_TERM_DIR="${PROJECT_ROOT}/hifiasm.terminal"
 HIFIASM_MAT_DIR="${PROJECT_ROOT}/hifiasm.maternal"
 CLEAN_DATA="${PROJECT_ROOT}/data-cleaned"
 
-YAK_HAP_MAT="${YAK_DIR}/${ILLUM_MAT}.yak"
-YAK_HAP_PAT="${YAK_DIR}/${ILLUM_PAT}.yak"
-YAK_HAP_MGS="${YAK_DIR}/${ILLUM_MGS}.yak"
-YAK_HAP_MGD="${YAK_DIR}/${ILLUM_MGD}.yak"
-MERYL_HAP_MAT="${MERQURY_TERM_DIR}/${ILLUM_MAT}.hapmer.meryl"
-MERYL_HAP_PAT="${MERQURY_TERM_DIR}/${ILLUM_PAT}.hapmer.meryl"
-MERYL_HAP_MGS="${MERQURY_MAT_DIR}/${ILLUM_MGS}.hapmer.meryl"
-MERYL_HAP_MGD="${MERQURY_MAT_DIR}/${ILLUM_MGD}.hapmer.meryl"
+# Set default database paths using sanitized tags if not explicitly overridden
+YAK_HAP_MAT="${YAK_HAP_MAT:-${YAK_DIR}/${ILLUM_MAT_TAG}.yak}"
+YAK_HAP_PAT="${YAK_HAP_PAT:-${YAK_DIR}/${ILLUM_PAT_TAG}.yak}"
+YAK_HAP_MGS="${YAK_HAP_MGS:-${YAK_DIR}/${ILLUM_MGS_TAG}.yak}"
+YAK_HAP_MGD="${YAK_HAP_MGD:-${YAK_DIR}/${ILLUM_MGD_TAG}.yak}"
+
+MERYL_HAP_MAT="${MERYL_HAP_MAT:-${MERQURY_TERM_DIR}/${ILLUM_MAT_TAG}.hapmer.meryl}"
+MERYL_HAP_PAT="${MERYL_HAP_PAT:-${MERQURY_TERM_DIR}/${ILLUM_PAT_TAG}.hapmer.meryl}"
+MERYL_HAP_MGS="${MERYL_HAP_MGS:-${MERQURY_MAT_DIR}/${ILLUM_MGS_TAG}.hapmer.meryl}"
+MERYL_HAP_MGD="${MERYL_HAP_MGD:-${MERQURY_MAT_DIR}/${ILLUM_MGD_TAG}.hapmer.meryl}"
+# ----------------------------------------------------------------------------------------------- #
+
 
 # 1. Terminal Animal Assemblies (Offspring: Term | Parents: Mat + Pat)
-# ------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------------------- #
 echo "Submitting Terminal Animal Trio Assemblies..."
+# Create parent directories for SLURM stdout/stderr logs
+mkdir -p "${HIFIASM_TERM_DIR}" "${VERKKO_TERM_DIR}"
 
 # HiFiasm Terminal
+echo "+ sbatch --job-name=hifiasm_term --cpus-per-task=64 --mem=400G --time=4-00:00:00 --output=\"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.terminal.log\" \"${PIPELINE_DIR}/launch_hifiasm_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.terminal\" --ont \"${CLEAN_DATA}/ont.terminal\" --yak.mat \"${YAK_HAP_MAT}\" --yak.pat \"${YAK_HAP_PAT}\""
 sbatch --job-name=hifiasm_term --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
     --output="${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.terminal.log" "${PIPELINE_DIR}/launch_hifiasm_trio.sh" \
-	--pipelineDir "${PIPELINE_DIR}" \
+    --pipelineDir "${PIPELINE_DIR}" \
     --outdir "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}" \
     --hifi "${CLEAN_DATA}/hifi.terminal" \
-	--ont "${CLEAN_DATA}/ont.terminal" \
+    --ont "${CLEAN_DATA}/ont.terminal" \
     --yak.mat "${YAK_HAP_MAT}" \
     --yak.pat "${YAK_HAP_PAT}"
 
 # Verkko Terminal
+echo "+ sbatch --job-name=verkko_term --cpus-per-task=4 --mem=64G --time=6-00:00:00 --output=\"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}.terminal.log\" \"${PIPELINE_DIR}/launch_verkko_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.terminal\" --ont \"${CLEAN_DATA}/ont.terminal\" --mtDNA \"${MTDNA_REF}\" --rDNA \"${RDNA_REF}\" --meryl.mat \"${MERYL_HAP_MAT}\" --meryl.pat \"${MERYL_HAP_PAT}\""
 sbatch --job-name=verkko_term --cpus-per-task=4 --mem=64G --time=6-00:00:00 \
     --output="${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}.terminal.log" "${PIPELINE_DIR}/launch_verkko_trio.sh" \
-	--pipelineDir "${PIPELINE_DIR}" \
+    --pipelineDir "${PIPELINE_DIR}" \
     --outdir "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}" \
     --hifi "${CLEAN_DATA}/hifi.terminal" \
     --ont "${CLEAN_DATA}/ont.terminal" \
-	--mtDNA "${MTDNA_REF}" \
-	--rDNA "${RDNA_REF}" \
+    --mtDNA "${MTDNA_REF}" \
+    --rDNA "${RDNA_REF}" \
     --meryl.mat "${MERYL_HAP_MAT}" \
     --meryl.pat "${MERYL_HAP_PAT}"
-
-# ------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------------------- #
 
 
 # 2. Maternal F1 Assemblies (Offspring: Mat | Parents: MGD + MGS)
-# ------------------------------------------------------------------------------- #
+# ----------------------------------------------------------------------------------------------- #
 if [[ "$ThreeGenMode" == "YES" ]]; then
     echo "Submitting Maternal F1 Animal Trio Assemblies..."
-
+	# Create parent directories for SLURM stdout/stderr logs
+	mkdir -p "${HIFIASM_MAT_DIR}" "${VERKKO_MAT_DIR}"
+	
     # HiFiasm Maternal F1
+    echo "+ sbatch --job-name=hifiasm_mat --cpus-per-task=64 --mem=400G --time=4-00:00:00 --output=\"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.maternal.log\" \"${PIPELINE_DIR}/launch_hifiasm_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.maternal\" --ont \"${CLEAN_DATA}/ont.maternal\" --yak.mat \"${YAK_HAP_MGD}\" --yak.pat \"${YAK_HAP_MGS}\""
     sbatch --job-name=hifiasm_mat --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
         --output="${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.maternal.log" "${PIPELINE_DIR}/launch_hifiasm_trio.sh" \
-		--pipelineDir "${PIPELINE_DIR}" \
+        --pipelineDir "${PIPELINE_DIR}" \
         --outdir "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}" \
-		--hifi "${CLEAN_DATA}/hifi.maternal" \
-		--ont "${CLEAN_DATA}/ont.maternal" \
-		--yak.mat "${YAK_HAP_MGD}" \
-		--yak.pat "${YAK_HAP_MGS}"
+        --hifi "${CLEAN_DATA}/hifi.maternal" \
+        --ont "${CLEAN_DATA}/ont.maternal" \
+        --yak.mat "${YAK_HAP_MGD}" \
+        --yak.pat "${YAK_HAP_MGS}"
 
     # Verkko Maternal F1
+    echo "+ sbatch --job-name=verkko_mat --cpus-per-task=4 --mem=64G --time=6-00:00:00 --output=\"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}.maternal.log\" \"${PIPELINE_DIR}/launch_verkko_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.maternal\" --ont \"${CLEAN_DATA}/ont.maternal\" --mtDNA \"${MTDNA_REF}\" --rDNA \"${RDNA_REF}\" --meryl.mat \"${MERYL_HAP_MGD}\" --meryl.pat \"${MERYL_HAP_MGS}\""
     sbatch --job-name=verkko_mat --cpus-per-task=4 --mem=64G --time=6-00:00:00 \
         --output="${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}.maternal.log" "${PIPELINE_DIR}/launch_verkko_trio.sh" \
-		--pipelineDir "${PIPELINE_DIR}" \
+        --pipelineDir "${PIPELINE_DIR}" \
         --outdir "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}" \
-		--hifi "${CLEAN_DATA}/hifi.maternal" \
-		--ont "${CLEAN_DATA}/ont.maternal" \
-		--mtDNA "${MTDNA_REF}" \
-		--rDNA "${RDNA_REF}" \
-		--meryl.mat "${MERYL_HAP_MGD}" \
-		--meryl.pat "${MERYL_HAP_MGS}"
+        --hifi "${CLEAN_DATA}/hifi.maternal" \
+        --ont "${CLEAN_DATA}/ont.maternal" \
+        --mtDNA "${MTDNA_REF}" \
+        --rDNA "${RDNA_REF}" \
+        --meryl.mat "${MERYL_HAP_MGD}" \
+        --meryl.pat "${MERYL_HAP_MGS}"
 fi
+# ----------------------------------------------------------------------------------------------- #
 
-# ------------------------------------------------------------------------------- #
+echo "assembly.sh submission complete!"
