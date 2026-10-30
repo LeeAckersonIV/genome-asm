@@ -8,6 +8,8 @@
 # assembly-metrics.sh \
 #	--load.project.params \		# can re-use input parameter config from initialize.sh; default NO
 #	--projectROOT \ 			# where initialize.sh built the project directory at
+#	--eval.hifiasm \ 			# evaluate HiFiasm assemblies (TRUE/FALSE); default is TRUE
+#	--eval.verkko \ 			# evaluate Verkko assemblies (TRUE/FALSE); default is TRUE
 #	--ref.rdna \ 				# reference rDNA morph for species to use for filtering/assembly.
 #	--ref.mtdna \ 				# reference mtDNA morph for species to use for filtering/assembly.
 #	--meryl.hapmers.mat \ 		# path to meryl maternal hapmers database
@@ -38,11 +40,11 @@
 # =============================================================================================== #
 # Example Command Execution
 # ----------------------------------------------------------------------------------------------- #
-# ./assembly-metrics.sh --projectROOT SRP_1 --illumina.terminal.lib LIB212039 --illumina.maternal.lib LIB212038 --illumina.paternal.lib LIB212041 --illumina.MGS.lib LIB212046 --illumina.MGD.lib LIB212044 --hifi.terminal.lib LIB212031 --hifi.maternal.lib LIB212951
+# ./assembly-metrics.sh --projectROOT SRP_1 --eval.hifiasm TRUE --eval.verkko FALSE
 
 # OR, IF initialize.sh was RUN FIRST:
 
-# ./assembly-metrics.sh --projectROOT SRP_1 --load.project.params YES
+# ./assembly-metrics.sh --projectROOT SRP_1 --load.project.params YES --eval.verkko FALSE
 # =============================================================================================== #
 
 
@@ -76,6 +78,8 @@ usage() {
 	echo "assembly-metrics.sh \ "
 	echo "	--load.project.params \		# can re-use input parameter config from initialize.sh; default NO"
 	echo "	--projectROOT \ 			# where directory structure will be built, default is working dir"
+	echo "	--eval.hifiasm \ 			# evaluate HiFiasm assemblies (TRUE/FALSE); default is TRUE"
+	echo "	--eval.verkko \ 			# evaluate Verkko assemblies (TRUE/FALSE); default is TRUE"
 	echo "	--ref.rdna \ 				# reference rDNA morph for species to use for filtering/assembly."
 	echo "	--ref.mtdna \ 				# reference mtDNA morph for species to use for filtering/assembly."
 	echo "	--meryl.hapmers.mat \ 		# name of meryl maternal hapmers database"
@@ -105,14 +109,6 @@ usage() {
 	echo "	--help						# print all options and point to github documentation"
 	echo "# ------------------------------------------------------------------------------------------ #"
 	echo ""
-	echo "If initialize.sh has already been run for this project, and no parameters need changed, "
-	echo " then simply run this script as follows:"
-	echo "assembly-metrics.sh \ "
-	echo "	--load.project.params YES \		# can re-use input parameter config from initialize.sh; default NO"
-	echo "	--projectROOT path/to/project \	# where directory structure will be built, default is working dir"
-	echo ""
-	echo "# ------------------------------------------------------------------------------------------ #"
-	echo ""
 	exit 1
 }
 # ----------------------------------------------------------------------------------------------- #
@@ -126,6 +122,10 @@ ILLUM_MGS="NA"
 ILLUM_MGD="NA"
 ONT_TERM="NA"
 ONT_MAT="NA"
+
+# default evaluation switches
+EVAL_HIFIASM="TRUE"
+EVAL_VERKKO="TRUE"
 
 # defaults if using outputs from earlier scripts in workflow
 PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
@@ -178,6 +178,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
 		--load.project.params) 	LOAD_CONFIG_PARAMS="$2"; shift 2 ;;
         --projectROOT) 		 	PROJECT_ROOT="$2"; shift 2 ;;
+		--eval.hifiasm)			EVAL_HIFIASM="$2"; shift 2 ;;
+		--eval.verkko)			EVAL_VERKKO="$2"; shift 2 ;;
 		--ref.rdna)				RDNA_REF="$2"; shift 2 ;;
 		--ref.mtdna)			MTDNA_REF="$2"; shift 2 ;;
 		--meryl.hapmers.mat)	MERYL_HAP_MAT="$2"; shift 2 ;;
@@ -208,6 +210,12 @@ while [[ $# -gt 0 ]]; do
         *) 	 	 			echo "Error: Unknown option $1"; usage ;;
     esac
 done
+
+# Helper function to evaluate boolean flag inputs flexible to TRUE/YES/1
+is_true() {
+	local val="${1^^}"
+	[[ "$val" == "TRUE" || "$val" == "YES" || "$val" == "1" ]]
+}
 
 
 # Validate that all required inputs are supplied
@@ -302,69 +310,79 @@ fi
 # ----------------------------------------------------------------------------------------------- #
 echo "Initiating Contiguity & N50 (QUAST) Evaluation..."
 
-# Hifiasm GFA to FASTA conversion
-if [[ -f "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa" ]]; then
-    echo "+ awk '/^S/{print \">\"\$2\"\n\"\$3}' ${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa > ${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
-    awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa" > "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+# Hifiasm Evaluation Block
+if is_true "$EVAL_HIFIASM"; then
+	echo "Evaluating HiFiasm assemblies..."
+
+	# Hifiasm GFA to FASTA conversion
+	if [[ -f "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa" ]]; then
+		echo "+ awk '/^S/{print \">\"\$2\"\n\"\$3}' ${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa > ${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+		awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa" > "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+	fi
+
+	if [[ -f "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa" ]]; then
+		echo "+ awk '/^S/{print \">\"\$2\"\n\"\$3}' ${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa > ${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+		awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa" > "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+	fi
+
+	if [[ "$ThreeGenMode" == "YES" ]]; then
+		if [[ -f "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa" ]]; then
+			echo "+ awk '/^S/{print \">\"\$2\"\n\"\$3}' ${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa > ${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+			awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa" > "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+		fi
+
+		if [[ -f "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa" ]]; then
+			echo "+ awk '/^S/{print \">\"\$2\"\n\"\$3}' ${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa > ${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+			awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa" > "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+		fi
+	fi
+
+	# Launch QUAST for Hifiasm
+	echo "+ sbatch --job-name=term-hifiasm-quast --cpus-per-task=8 --mem=250G --time=2:00:00 --output=\"${N50_DIR}/terminal.hifiasm.quast.log\" \"${PIPELINE_DIR}/N50.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${N50_DIR}/terminal.hifiasm.quast\" --assembly1 \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta\" --assembly2 \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta\" --reference \"${REF_HXYL}\""
+	sbatch --job-name=term-hifiasm-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
+		--output="${N50_DIR}/terminal.hifiasm.quast.log" "${PIPELINE_DIR}/N50.sh" \
+		--pipelineDir "${PIPELINE_DIR}" \
+		--outdir "${N50_DIR}/terminal.hifiasm.quast" \
+		--assembly1 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+		--assembly2 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
+		--reference "${REF_HXYL}"
+
+	if [[ "$ThreeGenMode" == "YES" ]]; then
+		echo "+ sbatch --job-name=mat-hifiasm-quast --cpus-per-task=8 --mem=250G --time=2:00:00 --output=\"${N50_DIR}/maternal.hifiasm.quast.log\" \"${PIPELINE_DIR}/N50.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${N50_DIR}/maternal.hifiasm.quast\" --assembly1 \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta\" --assembly2 \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta\" --reference \"${REF_HXYL}\""
+		sbatch --job-name=mat-hifiasm-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
+			--output="${N50_DIR}/maternal.hifiasm.quast.log" "${PIPELINE_DIR}/N50.sh" \
+			--pipelineDir "${PIPELINE_DIR}" \
+			--outdir "${N50_DIR}/maternal.hifiasm.quast" \
+			--assembly1 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+			--assembly2 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
+			--reference "${REF_HXYL}"
+	fi
 fi
 
-if [[ -f "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa" ]]; then
-    echo "+ awk '/^S/{print \">\"\$2\"\n\"\$3}' ${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa > ${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
-    awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa" > "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
-fi
+# Verkko Evaluation Block
+if is_true "$EVAL_VERKKO"; then
+	echo "Evaluating Verkko assemblies..."
 
-if [[ "$ThreeGenMode" == "YES" ]]; then
-    if [[ -f "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa" ]]; then
-        echo "+ awk '/^S/{print \">\"\$2\"\n\"\$3}' ${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa > ${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
-        awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.gfa" > "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
-    fi
+	# Launch QUAST for Verkko
+	echo "+ sbatch --job-name=term-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 --output=\"${N50_DIR}/terminal.verkko.quast.log\" \"${PIPELINE_DIR}/N50.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${N50_DIR}/terminal.verkko.quast\" --assembly1 \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta\" --assembly2 \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta\" --reference \"${REF_HXYL}\""
+	sbatch --job-name=term-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
+		--output="${N50_DIR}/terminal.verkko.quast.log" "${PIPELINE_DIR}/N50.sh" \
+		--pipelineDir "${PIPELINE_DIR}" \
+		--outdir "${N50_DIR}/terminal.verkko.quast" \
+		--assembly1 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+		--assembly2 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
+		--reference "${REF_HXYL}"
 
-    if [[ -f "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa" ]]; then
-        echo "+ awk '/^S/{print \">\"\$2\"\n\"\$3}' ${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa > ${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
-        awk '/^S/{print ">"$2"\n"$3}' "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.gfa" > "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
-    fi
-fi
-
-# Launch QUAST for Hifiasm
-echo "+ sbatch --job-name=term-hifiasm-quast --cpus-per-task=8 --mem=250G --time=2:00:00 --output=\"${N50_DIR}/terminal.hifiasm.quast.log\" \"${PIPELINE_DIR}/N50.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${N50_DIR}/terminal.hifiasm.quast\" --assembly1 \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta\" --assembly2 \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta\" --reference \"${REF_HXYL}\""
-sbatch --job-name=term-hifiasm-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
-	--output="${N50_DIR}/terminal.hifiasm.quast.log" "${PIPELINE_DIR}/N50.sh" \
-	--pipelineDir "${PIPELINE_DIR}" \
-	--outdir "${N50_DIR}/terminal.hifiasm.quast" \
-	--assembly1 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
-	--assembly2 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
-	--reference "${REF_HXYL}"
-
-if [[ "$ThreeGenMode" == "YES" ]]; then
-    echo "+ sbatch --job-name=mat-hifiasm-quast --cpus-per-task=8 --mem=250G --time=2:00:00 --output=\"${N50_DIR}/maternal.hifiasm.quast.log\" \"${PIPELINE_DIR}/N50.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${N50_DIR}/maternal.hifiasm.quast\" --assembly1 \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta\" --assembly2 \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta\" --reference \"${REF_HXYL}\""
-    sbatch --job-name=mat-hifiasm-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
-    	--output="${N50_DIR}/maternal.hifiasm.quast.log" "${PIPELINE_DIR}/N50.sh" \
-    	--pipelineDir "${PIPELINE_DIR}" \
-    	--outdir "${N50_DIR}/maternal.hifiasm.quast" \
-    	--assembly1 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
-    	--assembly2 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
-    	--reference "${REF_HXYL}"
-fi
-			
-# Launch QUAST for Verkko
-echo "+ sbatch --job-name=term-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 --output=\"${N50_DIR}/terminal.verkko.quast.log\" \"${PIPELINE_DIR}/N50.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${N50_DIR}/terminal.verkko.quast\" --assembly1 \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta\" --assembly2 \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta\" --reference \"${REF_HXYL}\""
-sbatch --job-name=term-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
-	--output="${N50_DIR}/terminal.verkko.quast.log" "${PIPELINE_DIR}/N50.sh" \
-	--pipelineDir "${PIPELINE_DIR}" \
-	--outdir "${N50_DIR}/terminal.verkko.quast" \
-	--assembly1 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
-	--assembly2 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
-	--reference "${REF_HXYL}"
-
-if [[ "$ThreeGenMode" == "YES" ]]; then
-    echo "+ sbatch --job-name=mat-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 --output=\"${N50_DIR}/maternal.verkko.quast.log\" \"${PIPELINE_DIR}/N50.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${N50_DIR}/maternal.verkko.quast\" --assembly1 \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta\" --assembly2 \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta\" --reference \"${REF_HXYL}\""
-    sbatch --job-name=mat-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
-    	--output="${N50_DIR}/maternal.verkko.quast.log" "${PIPELINE_DIR}/N50.sh" \
-    	--pipelineDir "${PIPELINE_DIR}" \
-    	--outdir "${N50_DIR}/maternal.verkko.quast" \
-    	--assembly1 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
-    	--assembly2 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
-    	--reference "${REF_HXYL}"
+	if [[ "$ThreeGenMode" == "YES" ]]; then
+		echo "+ sbatch --job-name=mat-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 --output=\"${N50_DIR}/maternal.verkko.quast.log\" \"${PIPELINE_DIR}/N50.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${N50_DIR}/maternal.verkko.quast\" --assembly1 \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta\" --assembly2 \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta\" --reference \"${REF_HXYL}\""
+		sbatch --job-name=mat-verkko-quast --cpus-per-task=8 --mem=250G --time=2:00:00 \
+			--output="${N50_DIR}/maternal.verkko.quast.log" "${PIPELINE_DIR}/N50.sh" \
+			--pipelineDir "${PIPELINE_DIR}" \
+			--outdir "${N50_DIR}/maternal.verkko.quast" \
+			--assembly1 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+			--assembly2 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
+			--reference "${REF_HXYL}"
+	fi
 fi
 # ----------------------------------------------------------------------------------------------- #
 
@@ -374,41 +392,45 @@ fi
 echo "Initiating Gene Completeness (BUSCO) Evaluation..."
 
 # Hifiasm BUSCO
-echo "+ sbatch --job-name=term-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 --output=\"${BUSCO_DIR}/terminal.hifiasm.busco.log\" \"${PIPELINE_DIR}/BUSCO.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${BUSCO_DIR}/terminal.hifiasm.busco\" --assembly1 \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta\" --assembly2 \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta\""
-sbatch --job-name=term-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
-	--output="${BUSCO_DIR}/terminal.hifiasm.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
-	--pipelineDir "${PIPELINE_DIR}" \
-	--outdir "${BUSCO_DIR}/terminal.hifiasm.busco" \
-	--assembly1 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
-	--assembly2 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+if is_true "$EVAL_HIFIASM"; then
+	echo "+ sbatch --job-name=term-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 --output=\"${BUSCO_DIR}/terminal.hifiasm.busco.log\" \"${PIPELINE_DIR}/BUSCO.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${BUSCO_DIR}/terminal.hifiasm.busco\" --assembly1 \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta\" --assembly2 \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta\""
+	sbatch --job-name=term-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
+		--output="${BUSCO_DIR}/terminal.hifiasm.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
+		--pipelineDir "${PIPELINE_DIR}" \
+		--outdir "${BUSCO_DIR}/terminal.hifiasm.busco" \
+		--assembly1 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+		--assembly2 "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
 
-if [[ "$ThreeGenMode" == "YES" ]]; then
-    echo "+ sbatch --job-name=mat-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 --output=\"${BUSCO_DIR}/maternal.hifiasm.busco.log\" \"${PIPELINE_DIR}/BUSCO.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${BUSCO_DIR}/maternal.hifiasm.busco\" --assembly1 \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta\" --assembly2 \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta\""
-    sbatch --job-name=mat-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
-    	--output="${BUSCO_DIR}/maternal.hifiasm.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
-    	--pipelineDir "${PIPELINE_DIR}" \
-    	--outdir "${BUSCO_DIR}/maternal.hifiasm.busco" \
-    	--assembly1 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
-    	--assembly2 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+	if [[ "$ThreeGenMode" == "YES" ]]; then
+		echo "+ sbatch --job-name=mat-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 --output=\"${BUSCO_DIR}/maternal.hifiasm.busco.log\" \"${PIPELINE_DIR}/BUSCO.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${BUSCO_DIR}/maternal.hifiasm.busco\" --assembly1 \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta\" --assembly2 \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta\""
+		sbatch --job-name=mat-hifiasm-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
+			--output="${BUSCO_DIR}/maternal.hifiasm.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
+			--pipelineDir "${PIPELINE_DIR}" \
+			--outdir "${BUSCO_DIR}/maternal.hifiasm.busco" \
+			--assembly1 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+			--assembly2 "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+	fi
 fi
 
 # Verkko BUSCO
-echo "+ sbatch --job-name=term-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 --output=\"${BUSCO_DIR}/terminal.verkko.busco.log\" \"${PIPELINE_DIR}/BUSCO.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${BUSCO_DIR}/terminal.verkko.busco\" --assembly1 \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta\" --assembly2 \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta\""
-sbatch --job-name=term-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
-	--output="${BUSCO_DIR}/terminal.verkko.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
-	--pipelineDir "${PIPELINE_DIR}" \
-	--outdir "${BUSCO_DIR}/terminal.verkko.busco" \
-	--assembly1 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
-	--assembly2 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
+if is_true "$EVAL_VERKKO"; then
+	echo "+ sbatch --job-name=term-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 --output=\"${BUSCO_DIR}/terminal.verkko.busco.log\" \"${PIPELINE_DIR}/BUSCO.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${BUSCO_DIR}/terminal.verkko.busco\" --assembly1 \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta\" --assembly2 \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta\""
+	sbatch --job-name=term-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
+		--output="${BUSCO_DIR}/terminal.verkko.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
+		--pipelineDir "${PIPELINE_DIR}" \
+		--outdir "${BUSCO_DIR}/terminal.verkko.busco" \
+		--assembly1 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+		--assembly2 "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
 
-if [[ "$ThreeGenMode" == "YES" ]]; then
-    echo "+ sbatch --job-name=mat-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 --output=\"${BUSCO_DIR}/maternal.verkko.busco.log\" \"${PIPELINE_DIR}/BUSCO.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${BUSCO_DIR}/maternal.verkko.busco\" --assembly1 \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta\" --assembly2 \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta\""
-    sbatch --job-name=mat-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
-    	--output="${BUSCO_DIR}/maternal.verkko.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
-    	--pipelineDir "${PIPELINE_DIR}" \
-    	--outdir "${BUSCO_DIR}/maternal.verkko.busco" \
-    	--assembly1 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
-    	--assembly2 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
+	if [[ "$ThreeGenMode" == "YES" ]]; then
+		echo "+ sbatch --job-name=mat-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 --output=\"${BUSCO_DIR}/maternal.verkko.busco.log\" \"${PIPELINE_DIR}/BUSCO.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${BUSCO_DIR}/maternal.verkko.busco\" --assembly1 \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta\" --assembly2 \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta\""
+		sbatch --job-name=mat-verkko-busco --cpus-per-task=16 --mem=350G --time=8:00:00 \
+			--output="${BUSCO_DIR}/maternal.verkko.busco.log" "${PIPELINE_DIR}/BUSCO.sh" \
+			--pipelineDir "${PIPELINE_DIR}" \
+			--outdir "${BUSCO_DIR}/maternal.verkko.busco" \
+			--assembly1 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+			--assembly2 "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
+	fi
 fi
 # ----------------------------------------------------------------------------------------------- #
 
@@ -448,40 +470,46 @@ run_merqury_qv() {
 		"
 }
 
-# Terminal Assemblies
-run_merqury_qv \
-	"${MERQURY_TERM_DIR}/${ILLUM_TERM_TAG}.meryl" \
-	"${MERYL_HAP_MAT}" \
-	"${MERYL_HAP_PAT}" \
-	"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
-	"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
-	"hifiasm.terminal"
-
-run_merqury_qv \
-	"${MERQURY_TERM_DIR}/${ILLUM_TERM_TAG}.meryl" \
-	"${MERYL_HAP_MAT}" \
-	"${MERYL_HAP_PAT}" \
-	"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
-	"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
-	"verkko.terminal"
-
-# Maternal Assemblies (If 3-Generation Mode)
-if [[ "$ThreeGenMode" == "YES" ]]; then
+# Hifiasm Merqury
+if is_true "$EVAL_HIFIASM"; then
 	run_merqury_qv \
-		"${MERQURY_MAT_DIR}/${ILLUM_MAT_TAG}.meryl" \
-		"${MERYL_HAP_MGD}" \
-		"${MERYL_HAP_MGS}" \
-		"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
-		"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
-		"hifiasm.maternal"
+		"${MERQURY_TERM_DIR}/${ILLUM_TERM_TAG}.meryl" \
+		"${MERYL_HAP_MAT}" \
+		"${MERYL_HAP_PAT}" \
+		"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+		"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
+		"hifiasm.terminal"
 
+	if [[ "$ThreeGenMode" == "YES" ]]; then
+		run_merqury_qv \
+			"${MERQURY_MAT_DIR}/${ILLUM_MAT_TAG}.meryl" \
+			"${MERYL_HAP_MGD}" \
+			"${MERYL_HAP_MGS}" \
+			"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta" \
+			"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta" \
+			"hifiasm.maternal"
+	fi
+fi
+
+# Verkko Merqury
+if is_true "$EVAL_VERKKO"; then
 	run_merqury_qv \
-		"${MERQURY_MAT_DIR}/${ILLUM_MAT_TAG}.meryl" \
-		"${MERYL_HAP_MGD}" \
-		"${MERYL_HAP_MGS}" \
-		"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
-		"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
-		"verkko.maternal"
+		"${MERQURY_TERM_DIR}/${ILLUM_TERM_TAG}.meryl" \
+		"${MERYL_HAP_MAT}" \
+		"${MERYL_HAP_PAT}" \
+		"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+		"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
+		"verkko.terminal"
+
+	if [[ "$ThreeGenMode" == "YES" ]]; then
+		run_merqury_qv \
+			"${MERQURY_MAT_DIR}/${ILLUM_MAT_TAG}.meryl" \
+			"${MERYL_HAP_MGD}" \
+			"${MERYL_HAP_MGS}" \
+			"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta" \
+			"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta" \
+			"verkko.maternal"
+	fi
 fi
 echo "Finishing Merqury QV Submissions..."
 # ----------------------------------------------------------------------------------------------- #
@@ -493,21 +521,33 @@ echo "Calculating T2T Metrics & Summarizing Assemblies..."
 T2T_DIR="${ASMQC_DIR}/T2T"
 mkdir -p "$T2T_DIR"
 
-# Identify & collate assemblies
-TARGET_FASTAS=(
-	"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
-	"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
-	"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta"
-	"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
-)
+# Dynamically build target FASTA list based on evaluation flags
+TARGET_FASTAS=()
 
-if [[ "$ThreeGenMode" == "YES" ]]; then
+if is_true "$EVAL_HIFIASM"; then
 	TARGET_FASTAS+=(
-		"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
-		"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
-		"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta"
-		"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
+		"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+		"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
 	)
+	if [[ "$ThreeGenMode" == "YES" ]]; then
+		TARGET_FASTAS+=(
+			"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap1.p_ctg.fasta"
+			"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.dip.hap2.p_ctg.fasta"
+		)
+	fi
+fi
+
+if is_true "$EVAL_VERKKO"; then
+	TARGET_FASTAS+=(
+		"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta"
+		"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
+	)
+	if [[ "$ThreeGenMode" == "YES" ]]; then
+		TARGET_FASTAS+=(
+			"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype1.fasta"
+			"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}/assembly.haplotype2.fasta"
+		)
+	fi
 fi
 
 # Verify assemblies exist
@@ -519,67 +559,66 @@ for fasta in "${TARGET_FASTAS[@]}"; do
 done
 
 if [[ ${#VALID_FASTAS[@]} -eq 0 ]]; then
-	echo "Error: No valid assembly FASTA files found for T2T analysis."
-	exit 1
+	echo "Warning: No valid assembly FASTA files found for T2T analysis (or evaluations skipped)."
+else
+	# Launch T2T evaluation job
+	echo "+ sbatch --job-name=t2t-stats --cpus-per-task=8 --mem=50G --time=4:00:00 --output=${T2T_DIR}/t2t_stats.log"
+	sbatch --job-name="t2t-stats" --cpus-per-task=8 --mem=50G --time=4:00:00 \
+		--output="${T2T_DIR}/t2t_stats.log" \
+		--wrap="
+			module load SAMtools
+			# General seqkit summary stats
+			${SEQKIT_SOFTWARE}/seqkit stats -j 8 -a ${VALID_FASTAS[*]} > ${T2T_DIR}/summary_assembly_stats.tsv
+
+			# Header for final summary table
+			echo -e 'Assembly\tTotal_Contigs\tT2T_Contigs' > ${T2T_DIR}/t2t_summary.tsv
+
+			# Threshold distance from contig ends (50 kb)
+			THRESHOLD=50000
+
+			for fasta in ${VALID_FASTAS[*]}; do
+				asm_name=\$(basename \"\$fasta\")
+				fai_file=\"\${fasta}.fai\"
+				loc_file=\"${T2T_DIR}/\${asm_name}.telomeres.bed\"
+
+				# A. Generate .fai index if missing
+				if [[ ! -f \"\$fai_file\" ]]; then
+					samtools faidx \"\$fasta\"
+				fi
+
+				# B. Search both forward and reverse telomeres in one pass (-b outputs BED format)
+				${SEQKIT_SOFTWARE}/seqkit locate -j 8 -i -b -p 'TTAGGG' -p 'CCCTAA' \"\$fasta\" > \"\$loc_file\"
+
+				# C. AWK script: cross-reference BED matches with .fai sequence lengths
+				read tot_cnt t2t_cnt <<< \$(awk -v thresh=\"\$THRESHOLD\" '
+					# Pass 1: Read .fai file to store contig lengths
+					NR==FNR {
+						len[\$1] = \$2;
+						next;
+					}
+					# Pass 2: Process telomere BED file matches
+					\$1 !~ /^#/ && \$1 !~ /^seqid/ {
+						seqid = \$1; start = \$2; end = \$3;
+						if (seqid in len) {
+							if (start <= thresh)                 has_5p[seqid] = 1;
+							if (end >= (len[seqid] - thresh))     has_3p[seqid] = 1;
+						}
+					}
+					# End: Count true T2T contigs (having both 5p and 3p telomeres)
+					END {
+						tot = 0; t2t = 0;
+						for (s in len) {
+							tot++;
+							if (has_5p[s] && has_3p[s]) t2t++;
+						}
+						print tot, t2t;
+					}
+				' \"\$fai_file\" \"\$loc_file\")
+
+				echo -e \"\${asm_name}\t\${tot_cnt}\t\${t2t_cnt}\" >> ${T2T_DIR}/t2t_summary.tsv
+			done
+		"
 fi
-
-# Launch T2T evaluation job
-echo "+ sbatch --job-name=t2t-stats --cpus-per-task=8 --mem=50G --time=4:00:00 --output=${T2T_DIR}/t2t_stats.log"
-sbatch --job-name="t2t-stats" --cpus-per-task=8 --mem=50G --time=4:00:00 \
-	--output="${T2T_DIR}/t2t_stats.log" \
-	--wrap="
-		module load SAMtools
-		# General seqkit summary stats
-		${SEQKIT_SOFTWARE}/seqkit stats -j 8 -a ${VALID_FASTAS[*]} > ${T2T_DIR}/summary_assembly_stats.tsv
-
-		# Header for final summary table
-		echo -e 'Assembly\tTotal_Contigs\tT2T_Contigs' > ${T2T_DIR}/t2t_summary.tsv
-
-		# Threshold distance from contig ends (50 kb)
-		THRESHOLD=50000
-
-		for fasta in ${VALID_FASTAS[*]}; do
-			asm_name=\$(basename \"\$fasta\")
-			fai_file=\"\${fasta}.fai\"
-			loc_file=\"${T2T_DIR}/\${asm_name}.telomeres.bed\"
-
-			# A. Generate .fai index if missing
-			if [[ ! -f \"\$fai_file\" ]]; then
-				samtools faidx \"\$fasta\"
-			fi
-
-			# B. Search both forward and reverse telomeres in one pass (-b outputs BED format)
-			${SEQKIT_SOFTWARE}/seqkit locate -j 8 -i -b -p 'TTAGGG' -p 'CCCTAA' \"\$fasta\" > \"\$loc_file\"
-
-			# C. AWK script: cross-reference BED matches with .fai sequence lengths
-			read tot_cnt t2t_cnt <<< \$(awk -v thresh=\"\$THRESHOLD\" '
-				# Pass 1: Read .fai file to store contig lengths
-				NR==FNR {
-					len[\$1] = \$2;
-					next;
-				}
-				# Pass 2: Process telomere BED file matches
-				\$1 !~ /^#/ && \$1 !~ /^seqid/ {
-					seqid = \$1; start = \$2; end = \$3;
-					if (seqid in len) {
-						if (start <= thresh)                 has_5p[seqid] = 1;
-						if (end >= (len[seqid] - thresh))     has_3p[seqid] = 1;
-					}
-				}
-				# End: Count true T2T contigs (having both 5p and 3p telomeres)
-				END {
-					tot = 0; t2t = 0;
-					for (s in len) {
-						tot++;
-						if (has_5p[s] && has_3p[s]) t2t++;
-					}
-					print tot, t2t;
-				}
-			' \"\$fai_file\" \"\$loc_file\")
-
-			echo -e \"\${asm_name}\t\${tot_cnt}\t\${t2t_cnt}\" >> ${T2T_DIR}/t2t_summary.tsv
-		done
-	"
 # ----------------------------------------------------------------------------------------------- #
 
 echo "assembly-metrics.sh submission complete!"
