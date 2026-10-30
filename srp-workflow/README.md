@@ -48,7 +48,6 @@ pip install pandas matplotlib seaborn
 
 
 # Workflow Execution
----
 
 
 **Note:** Adjust the `env.bashrc` to work on your system before running workflow
