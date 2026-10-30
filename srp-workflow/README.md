@@ -7,6 +7,22 @@
 ### 5. assembly.sh
 ### 6. assembly-metrics.sh
 
+## 📁 Repository Structure
+
+```text
+srp-workflow/
+├── env.bashrc                 # Global environment configurations & tool paths
+├── initialize.sh              # Project workspace initializer & params.config builder
+├── readQC.sh                  # Raw/cleaned data FastQC, SeqKit stats, and MultiQC
+├── density_plot.py            # Python script for read length/quality joint density plots
+├── filter.sh                  # Trimming & quality filtering (Chopper) for HiFi reads
+├── kmers.sh                   # K-mer counting (Meryl & Yak), GenomeScope2, & Merqury hapmers
+├── assembly.sh                # Trio assembly orchestrator (HiFiasm & Verkko)
+├── launch_hifiasm_trio.sh     # SLURM launcher wrapper for HiFiasm Trio
+├── launch_verkko_trio.sh      # SLURM launcher wrapper for Verkko Trio
+├── assembly-metrics.sh        # Post-assembly evaluation orchestrator
+├── N50.sh                     # QUAST contiguity & N50 analysis wrapper
+└── BUSCO.sh                   # Lineage gene completeness wrapper
 ---
 
 # Software Installation
