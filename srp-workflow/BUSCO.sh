@@ -22,26 +22,55 @@ else
     exit 1
 fi
 
-# Create target output paths
-mkdir -p "${OUTDIR}"
+# Define central download directory for lineage datasets
+DOWNLOAD_DIR="${PIPELINE_DIR}/references/busco_downloads"
 
-# set env
+# Create target directories
+mkdir -p "${OUTDIR}" "${DOWNLOAD_DIR}"
+
+# Set environment
 module load BUSCO/5.8.2-foss-2023a # MSU
+
+# Determine offline status to prevent race conditions on shared downloads
+OFFLINE_FLAG=""
+if [[ -d "${DOWNLOAD_DIR}/lineages/${LINEAGE}" ]]; then
+    echo "Lineage dataset ${LINEAGE} found in ${DOWNLOAD_DIR}. Running in offline mode."
+    OFFLINE_FLAG="--offline"
+fi
 
 echo "----------------------------------------------------------------"
 echo "Launching BUSCO Gene Completeness Analysis..."
 echo "Output Directory: ${OUTDIR}"
+echo "Download Directory: ${DOWNLOAD_DIR}"
 date
+
 # Evaluate Haplotype 1
 if [[ -f "$ASM1" ]]; then
-    echo "+ busco -i ${ASM1} -o hap1 --out_path ${OUTDIR} -m genome -l ${LINEAGE} -c ${SLURM_CPUS_PER_TASK:-16} --force"
-    busco -i "${ASM1}" -o hap1 --out_path "${OUTDIR}" -m genome -l "${LINEAGE}" -c "${SLURM_CPUS_PER_TASK:-16}" --force
+    echo "+ busco -i ${ASM1} -o hap1 --out_path ${OUTDIR} --download_path ${DOWNLOAD_DIR} ${OFFLINE_FLAG} -m genome -l ${LINEAGE} -c ${SLURM_CPUS_PER_TASK:-16} --force"
+    busco -i "${ASM1}" \
+          -o hap1 \
+          --out_path "${OUTDIR}" \
+          --download_path "${DOWNLOAD_DIR}" \
+          ${OFFLINE_FLAG} \
+          -m genome \
+          -l "${LINEAGE}" \
+          -c "${SLURM_CPUS_PER_TASK:-16}" \
+          --force
 fi
 
 # Evaluate Haplotype 2
 if [[ -f "$ASM2" ]]; then
-    echo "+ busco -i ${ASM2} -o hap2 --out_path ${OUTDIR} -m genome -l ${LINEAGE} -c ${SLURM_CPUS_PER_TASK:-16} --force"
-    busco -i "${ASM2}" -o hap2 --out_path "${OUTDIR}" -m genome -l "${LINEAGE}" -c "${SLURM_CPUS_PER_TASK:-16}" --force
+    echo "+ busco -i ${ASM2} -o hap2 --out_path ${OUTDIR} --download_path ${DOWNLOAD_DIR} ${OFFLINE_FLAG} -m genome -l ${LINEAGE} -c ${SLURM_CPUS_PER_TASK:-16} --force"
+    busco -i "${ASM2}" \
+          -o hap2 \
+          --out_path "${OUTDIR}" \
+          --download_path "${DOWNLOAD_DIR}" \
+          ${OFFLINE_FLAG} \
+          -m genome \
+          -l "${LINEAGE}" \
+          -c "${SLURM_CPUS_PER_TASK:-16}" \
+          --force
 fi
+
 date
 echo "----------------------------------------------------------------"
