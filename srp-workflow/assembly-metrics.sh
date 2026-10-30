@@ -303,6 +303,23 @@ if [[ ! -f "$REF_HXYL" ]]; then
     echo "+ wget -O ${REF_HXYL} https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/054/392/235/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz"
     wget -O "$REF_HXYL" https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/054/392/235/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz
 fi
+
+# Download BUSCO lineage database (cetartiodactyla_odb10)
+BUSCO_DOWNLOAD_DIR="${PIPELINE_DIR}/references/busco_downloads"
+LINEAGE_NAME="cetartiodactyla_odb10"
+LINEAGE_DIR="${BUSCO_DOWNLOAD_DIR}/lineages/${LINEAGE_NAME}"
+
+if [[ ! -d "$LINEAGE_DIR" ]]; then
+    echo "Pre-downloading BUSCO lineage dataset: ${LINEAGE_NAME}..."
+    mkdir -p "${BUSCO_DOWNLOAD_DIR}/lineages"
+    BUSCO_TAR="${BUSCO_DOWNLOAD_DIR}/lineages/${LINEAGE_NAME}.tar.gz"
+
+    wget --tries=5 --waitretry=5 -O "$BUSCO_TAR" \
+        "https://busco-data.ezlab.org/v5/data/lineages/cetartiodactyla_odb10.2024-01-08.tar.gz"
+
+    tar -xzf "$BUSCO_TAR" -C "${BUSCO_DOWNLOAD_DIR}/lineages/"
+    rm -f "$BUSCO_TAR"
+fi
 # ----------------------------------------------------------------------------------------------- #
 
 
