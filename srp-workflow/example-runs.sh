@@ -46,13 +46,13 @@ cd /mnt/gs21/scratch/ackers24/srp-sandbox
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP2 \
-    --illumina.terminal.lib  \
-    --illumina.maternal.lib  \
-    --illumina.paternal.lib  \
-    --illumina.MGS.lib  \
-    --illumina.MGD.lib  \
-    --hifi.terminal.lib \
-    --hifi.maternal.lib &> SRP2-initialize.log
+    --illumina.terminal.lib LIB212040 \
+    --illumina.maternal.lib LIB212037 \
+    --illumina.paternal.lib LIB212042 \
+    --illumina.MGS.lib LIB212045 \
+    --illumina.MGD.lib LIB212043 \
+    --hifi.terminal.lib "LIB212032,LIB215031" \
+    --hifi.maternal.lib "LIB212950,LIB215002" &> SRP2-initialize.log
 
 # Run readQC.sh
 sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
@@ -84,13 +84,13 @@ cd /mnt/gs21/scratch/ackers24/srp-sandbox
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP3 \
-    --illumina.terminal.lib  \
-    --illumina.maternal.lib  \
-    --illumina.paternal.lib  \
-    --illumina.MGS.lib  \
-    --illumina.MGD.lib  \
-    --hifi.terminal.lib \
-    --hifi.maternal.lib &> SRP3-initialize.log
+    --illumina.terminal.lib LIB219050 \
+    --illumina.maternal.lib LIB219054 \
+    --illumina.paternal.lib LIB216357 \
+    --illumina.MGS.lib LIB216351 \
+    --illumina.MGD.lib LIB216347 \
+    --hifi.terminal.lib LIB218782 \
+    --hifi.maternal.lib LIB219057 &> SRP3-initialize.log
 
 # Run readQC.sh
 sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
@@ -122,13 +122,13 @@ cd /mnt/gs21/scratch/ackers24/srp-sandbox
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP4 \
-    --illumina.terminal.lib  \
-    --illumina.maternal.lib  \
-    --illumina.paternal.lib  \
-    --illumina.MGS.lib  \
-    --illumina.MGD.lib  \
-    --hifi.terminal.lib \
-    --hifi.maternal.lib &> SRP4-initialize.log
+    --illumina.terminal.lib LIB219049 \
+    --illumina.maternal.lib LIB219053 \
+    --illumina.paternal.lib LIB216358 \
+    --illumina.MGS.lib LIB216352 \
+    --illumina.MGD.lib LIB216346 \
+    --hifi.terminal.lib LIB218781 \
+    --hifi.maternal.lib LIB219056 &> SRP4-initialize.log
 
 # Run readQC.sh
 sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
@@ -160,13 +160,13 @@ cd /mnt/gs21/scratch/ackers24/srp-sandbox
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP5 \
-    --illumina.terminal.lib  \
-    --illumina.maternal.lib  \
-    --illumina.paternal.lib  \
-    --illumina.MGS.lib  \
-    --illumina.MGD.lib  \
-    --hifi.terminal.lib \
-    --hifi.maternal.lib &> SRP5-initialize.log
+    --illumina.terminal.lib LIB219052 \
+    --illumina.maternal.lib LIB216350 \
+    --illumina.paternal.lib LIB216355 \
+    --illumina.MGS.lib LIB216353 \
+    --illumina.MGD.lib LIB216349 \
+    --hifi.terminal.lib LIB218784 \
+    --hifi.maternal.lib LIB216388 &> SRP5-initialize.log
 
 # Run readQC.sh
 sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
@@ -198,13 +198,13 @@ cd /mnt/gs21/scratch/ackers24/srp-sandbox
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP6 \
-    --illumina.terminal.lib  \
-    --illumina.maternal.lib  \
-    --illumina.paternal.lib  \
-    --illumina.MGS.lib  \
-    --illumina.MGD.lib  \
-    --hifi.terminal.lib \
-    --hifi.maternal.lib &> SRP6-initialize.log
+    --illumina.terminal.lib LIB219051 \
+    --illumina.maternal.lib LIB219055 \
+    --illumina.paternal.lib LIB216356 \
+    --illumina.MGS.lib LIB216354 \
+    --illumina.MGD.lib LIB216348 \
+    --hifi.terminal.lib LIB218783 \
+    --hifi.maternal.lib LIB218785 &> SRP6-initialize.log
 
 # Run readQC.sh
 sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
@@ -249,13 +249,13 @@ cd /mnt/gs21/scratch/ackers24/srp-sandbox
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP9 \
-    --illumina.terminal.lib  \
-    --illumina.maternal.lib  \
-    --illumina.paternal.lib  \
-    --illumina.MGS.lib  \
-    --illumina.MGD.lib  \
-    --hifi.terminal.lib \
-    --hifi.maternal.lib &> SRP9-initialize.log
+    --illumina.terminal.lib LIB223149 \
+    --illumina.maternal.lib LIB223143 \
+    --illumina.paternal.lib LIB223138 \
+    --illumina.MGS.lib LIB223132 \
+    --illumina.MGD.lib LIB223129 \
+    --hifi.terminal.lib LIB224204 \
+    --hifi.maternal.lib LIB223157 &> SRP9-initialize.log
 
 # Run readQC.sh
 sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
@@ -293,13 +293,13 @@ cd /mnt/gs21/scratch/ackers24/srp-sandbox
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP11 \
-    --illumina.terminal.lib  \
-    --illumina.maternal.lib  \
-    --illumina.paternal.lib  \
-    --illumina.MGS.lib  \
-    --illumina.MGD.lib  \
-    --hifi.terminal.lib \
-    --hifi.maternal.lib &> SRP11-initialize.log
+    --illumina.terminal.lib LIB223150 \
+    --illumina.maternal.lib LIB223145 \
+    --illumina.paternal.lib LIB223137 \
+    --illumina.MGS.lib LIB223135 \
+    --illumina.MGD.lib LIB223131 \
+    --hifi.terminal.lib LIB224205 \
+    --hifi.maternal.lib LIB224200 &> SRP11-initialize.log
 
 # Run readQC.sh
 sbatch --time=8:00:00 --cpus-per-task=16 --mem=250G \
