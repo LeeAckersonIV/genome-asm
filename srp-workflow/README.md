@@ -103,7 +103,7 @@ flowchart TD
         JOB_MERQURY --> QC_FINAL
         JOB_T2T --> QC_FINAL
     end
-
+```
 
 ### 1. initialize.sh
 ### 2. readQC.sh
