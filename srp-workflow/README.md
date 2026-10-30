@@ -23,6 +23,7 @@ srp-workflow/
 ├── assembly-metrics.sh        # Post-assembly evaluation orchestrator
 ├── N50.sh                     # QUAST contiguity & N50 analysis wrapper
 └── BUSCO.sh                   # Lineage gene completeness wrapper
+```
 ---
 
 # Software Installation
