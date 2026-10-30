@@ -25,10 +25,13 @@ fi
 # Create target output paths
 mkdir -p "${OUTDIR}"
 
+# set env
+module load BUSCO/5.8.2-foss-2023a # MSU
+
 echo "----------------------------------------------------------------"
 echo "Launching BUSCO Gene Completeness Analysis..."
 echo "Output Directory: ${OUTDIR}"
-
+date
 # Evaluate Haplotype 1
 if [[ -f "$ASM1" ]]; then
     echo "+ busco -i ${ASM1} -o hap1 --out_path ${OUTDIR} -m genome -l ${LINEAGE} -c ${SLURM_CPUS_PER_TASK:-16} --force"
@@ -40,5 +43,5 @@ if [[ -f "$ASM2" ]]; then
     echo "+ busco -i ${ASM2} -o hap2 --out_path ${OUTDIR} -m genome -l ${LINEAGE} -c ${SLURM_CPUS_PER_TASK:-16} --force"
     busco -i "${ASM2}" -o hap2 --out_path "${OUTDIR}" -m genome -l "${LINEAGE}" -c "${SLURM_CPUS_PER_TASK:-16}" --force
 fi
-
+date
 echo "----------------------------------------------------------------"

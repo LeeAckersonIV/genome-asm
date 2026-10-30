@@ -23,6 +23,9 @@ fi
 # Ensure output directory exists
 mkdir -p "${OUTDIR}"
 
+# set env
+module load QUAST/5.2.0 #MSU
+
 # Build QUAST command array
 QUAST_CMD=(
     quast.py
@@ -40,5 +43,6 @@ echo "Launching QUAST Contiguity & N50 Analysis..."
 echo "Output Directory: ${OUTDIR}"
 echo "+ ${QUAST_CMD[*]}"
 echo "----------------------------------------------------------------"
-
+date
 "${QUAST_CMD[@]}"
+date
