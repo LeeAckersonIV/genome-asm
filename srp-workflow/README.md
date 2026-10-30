@@ -7,6 +7,8 @@
 ### 5. assembly.sh
 ### 6. assembly-metrics.sh
 
+---
+
 ## 📁 Repository Structure
 
 ```text
@@ -42,8 +44,12 @@ export SRP_WORKFLOW="$PWD"
 # Build dependency environment
 pip install pandas matplotlib seaborn
 ```
+---
+
 
 # Workflow Execution
+---
+
 
 **Note:** Adjust the `env.bashrc` to work on your system before running workflow
 
@@ -87,4 +93,5 @@ ${SRP_WORKFLOW}/assembly.sh --projectROOT SRP_1 --load.project.params YES --verk
 ${SRP_WORKFLOW}/assemblyQC.sh --projectROOT SRP_1 --load.project.params YES --verkko.outdir.name verkko2.3.2_trio --hifiasm.outdir.name hifiasm_trio &> assemblyQC.log
 
 ```
+---
 
