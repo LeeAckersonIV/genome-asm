@@ -38,15 +38,6 @@
 #	--ThreeGenMode \			# indicate NO if only maternal, paternal, & F1 given; default YES
 #	--help						# print all options and point to github documentation
 # =============================================================================================== #
-# Example Command Execution
-# ----------------------------------------------------------------------------------------------- #
-# ./assembly-metrics.sh --projectROOT SRP_1 --eval.hifiasm TRUE --eval.verkko FALSE
-
-# OR, IF initialize.sh was RUN FIRST:
-
-# ./assembly-metrics.sh --projectROOT SRP_1 --load.project.params YES --eval.verkko FALSE
-# =============================================================================================== #
-
 
 # Function to display help menu
 # ----------------------------------------------------------------------------------------------- #
@@ -258,8 +249,10 @@ ONT_MAT_TAG="${ONT_MAT_TAG:-${ONT_MAT//,/_}}"
 # 0. Initialize variables & directory paths 
 # ----------------------------------------------------------------------------------------------- #
 PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
-MERQURY_TERM_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_terminal.compressed" 
-MERQURY_MAT_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_maternal.compressed" 
+
+# FIX: Point to standard UNCOMPRESSED Merqury directories instead of .compressed
+MERQURY_TERM_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_terminal" 
+MERQURY_MAT_DIR="${PROJECT_ROOT}/dataQC/merqury_trio_maternal" 
 
 YAK_DIR="${PROJECT_ROOT}/dataQC/yak"
 VERKKO_TERM_DIR="${PROJECT_ROOT}/verkko.terminal"
@@ -637,5 +630,3 @@ else
 		"
 fi
 # ----------------------------------------------------------------------------------------------- #
-
-echo "assembly-metrics.sh submission complete!"
