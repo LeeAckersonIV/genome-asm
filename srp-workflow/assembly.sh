@@ -8,6 +8,8 @@
 # assembly.sh \
 #	--load.project.params \		# can re-use input paramter config from initialize.sh; default NO
 #	--projectROOT \ 			# where initialize.sh built the project directory at
+#	--run.hifiasm \ 			# toggle to run HiFiasm assemblies; default TRUE
+#	--run.verkko \ 				# toggle to run Verkko assemblies; default TRUE
 #	--ref.rdna \ 				# reference rDNA moprh for species to use for filtering/assembly.
 #	--ref.mtdna \ 				# reference mtDNA moprh for species to use for filtering/assembly.
 #	--meryl.hapmers.mat \ 		# path to meryl maternal hapmers database
@@ -82,7 +84,8 @@ usage() {
 	echo "assembly.sh \ "
 	echo "	--load.project.params \		# can re-use input paramter config from initialize.sh; default NO"
 	echo "	--projectROOT \ 			# where directory strcuture will be built, default is working dir"
-	
+	echo "	--run.hifiasm \ 			# toggle execution of HiFiasm assemblies (TRUE/FALSE); default TRUE"
+	echo "	--run.verkko \ 				# toggle execution of Verkko assemblies (TRUE/FALSE); default TRUE"
 	echo "	--ref.rdna \ 				# reference rDNA moprh for species to use for filtering/assembly."
 	echo "	--ref.mtdna \ 				# reference mtDNA moprh for species to use for filtering/assembly."
 	echo "	--meryl.hapmers.mat \ 		# name of meryl maternal hapmers database"
@@ -136,6 +139,10 @@ ILLUM_MGD="NA"
 ONT_TERM="NA"
 ONT_MAT="NA"
 
+# default assembler toggles
+RUN_HIFIASM="TRUE"
+RUN_VERKKO="TRUE"
+
 # defaults if using outputs from earlier scripts in workflow
 PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
 VERKKO_OUTDIR="verkko2.3.2_trio"
@@ -188,6 +195,9 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
 		--load.project.params)     	LOAD_CONFIG_PARAMS="$2"; shift 2 ;;
         --projectROOT)     		 	PROJECT_ROOT="$2"; shift 2 ;;
+
+		--run.hifiasm)				RUN_HIFIASM="$2"; shift 2 ;;
+		--run.verkko)				RUN_VERKKO="$2"; shift 2 ;;
 
 		--ref.rdna)					RDNA_REF="$2"; shift 2 ;;
 		--ref.mtdna)				MTDNA_REF="$2"; shift 2 ;;
@@ -289,32 +299,36 @@ MERYL_HAP_MGD="${MERYL_HAP_MGD:-${MERQURY_MAT_DIR}/${ILLUM_MGD_TAG}.hapmer.meryl
 # 1. Terminal Animal Assemblies (Offspring: Term | Parents: Mat + Pat)
 # ----------------------------------------------------------------------------------------------- #
 echo "Submitting Terminal Animal Trio Assemblies..."
-# Create parent directories for SLURM stdout/stderr logs
-mkdir -p "${HIFIASM_TERM_DIR}" "${VERKKO_TERM_DIR}"
 
 # HiFiasm Terminal
-echo "+ sbatch --job-name=hifiasm_term --cpus-per-task=64 --mem=400G --time=4-00:00:00 --output=\"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.terminal.log\" \"${PIPELINE_DIR}/launch_hifiasm_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.terminal\" --ont \"${CLEAN_DATA}/ont.terminal\" --yak.mat \"${YAK_HAP_MAT}\" --yak.pat \"${YAK_HAP_PAT}\""
-sbatch --job-name=hifiasm_term --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
-    --output="${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.terminal.log" "${PIPELINE_DIR}/launch_hifiasm_trio.sh" \
-    --pipelineDir "${PIPELINE_DIR}" \
-    --outdir "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}" \
-    --hifi "${CLEAN_DATA}/hifi.terminal" \
-    --ont "${CLEAN_DATA}/ont.terminal" \
-    --yak.mat "${YAK_HAP_MAT}" \
-    --yak.pat "${YAK_HAP_PAT}"
+if [[ "${RUN_HIFIASM^^}" == "TRUE" || "${RUN_HIFIASM^^}" == "YES" ]]; then
+    mkdir -p "${HIFIASM_TERM_DIR}"
+    echo "+ sbatch --job-name=hifiasm_term --cpus-per-task=64 --mem=400G --time=4-00:00:00 --output=\"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.terminal.log\" \"${PIPELINE_DIR}/launch_hifiasm_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.terminal\" --ont \"${CLEAN_DATA}/ont.terminal\" --yak.mat \"${YAK_HAP_MAT}\" --yak.pat \"${YAK_HAP_PAT}\""
+    sbatch --job-name=hifiasm_term --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
+        --output="${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}.terminal.log" "${PIPELINE_DIR}/launch_hifiasm_trio.sh" \
+        --pipelineDir "${PIPELINE_DIR}" \
+        --outdir "${HIFIASM_TERM_DIR}/${HIFIASM_OUTDIR}" \
+        --hifi "${CLEAN_DATA}/hifi.terminal" \
+        --ont "${CLEAN_DATA}/ont.terminal" \
+        --yak.mat "${YAK_HAP_MAT}" \
+        --yak.pat "${YAK_HAP_PAT}"
+fi
 
 # Verkko Terminal
-echo "+ sbatch --job-name=verkko_term --cpus-per-task=4 --mem=64G --time=6-00:00:00 --output=\"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}.terminal.log\" \"${PIPELINE_DIR}/launch_verkko_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.terminal\" --ont \"${CLEAN_DATA}/ont.terminal\" --mtDNA \"${MTDNA_REF}\" --rDNA \"${RDNA_REF}\" --meryl.mat \"${MERYL_HAP_MAT}\" --meryl.pat \"${MERYL_HAP_PAT}\""
-sbatch --job-name=verkko_term --cpus-per-task=4 --mem=64G --time=6-00:00:00 \
-    --output="${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}.terminal.log" "${PIPELINE_DIR}/launch_verkko_trio.sh" \
-    --pipelineDir "${PIPELINE_DIR}" \
-    --outdir "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}" \
-    --hifi "${CLEAN_DATA}/hifi.terminal" \
-    --ont "${CLEAN_DATA}/ont.terminal" \
-    --mtDNA "${MTDNA_REF}" \
-    --rDNA "${RDNA_REF}" \
-    --meryl.mat "${MERYL_HAP_MAT}" \
-    --meryl.pat "${MERYL_HAP_PAT}"
+if [[ "${RUN_VERKKO^^}" == "TRUE" || "${RUN_VERKKO^^}" == "YES" ]]; then
+    mkdir -p "${VERKKO_TERM_DIR}"
+    echo "+ sbatch --job-name=verkko_term --cpus-per-task=4 --mem=64G --time=6-00:00:00 --output=\"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}.terminal.log\" \"${PIPELINE_DIR}/launch_verkko_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.terminal\" --ont \"${CLEAN_DATA}/ont.terminal\" --mtDNA \"${MTDNA_REF}\" --rDNA \"${RDNA_REF}\" --meryl.mat \"${MERYL_HAP_MAT}\" --meryl.pat \"${MERYL_HAP_PAT}\""
+    sbatch --job-name=verkko_term --cpus-per-task=4 --mem=64G --time=6-00:00:00 \
+        --output="${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}.terminal.log" "${PIPELINE_DIR}/launch_verkko_trio.sh" \
+        --pipelineDir "${PIPELINE_DIR}" \
+        --outdir "${VERKKO_TERM_DIR}/${VERKKO_OUTDIR}" \
+        --hifi "${CLEAN_DATA}/hifi.terminal" \
+        --ont "${CLEAN_DATA}/ont.terminal" \
+        --mtDNA "${MTDNA_REF}" \
+        --rDNA "${RDNA_REF}" \
+        --meryl.mat "${MERYL_HAP_MAT}" \
+        --meryl.pat "${MERYL_HAP_PAT}"
+fi
 # ----------------------------------------------------------------------------------------------- #
 
 
@@ -322,32 +336,36 @@ sbatch --job-name=verkko_term --cpus-per-task=4 --mem=64G --time=6-00:00:00 \
 # ----------------------------------------------------------------------------------------------- #
 if [[ "$ThreeGenMode" == "YES" ]]; then
     echo "Submitting Maternal F1 Animal Trio Assemblies..."
-	# Create parent directories for SLURM stdout/stderr logs
-	mkdir -p "${HIFIASM_MAT_DIR}" "${VERKKO_MAT_DIR}"
-	
+
     # HiFiasm Maternal F1
-    echo "+ sbatch --job-name=hifiasm_mat --cpus-per-task=64 --mem=400G --time=4-00:00:00 --output=\"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.maternal.log\" \"${PIPELINE_DIR}/launch_hifiasm_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.maternal\" --ont \"${CLEAN_DATA}/ont.maternal\" --yak.mat \"${YAK_HAP_MGD}\" --yak.pat \"${YAK_HAP_MGS}\""
-    sbatch --job-name=hifiasm_mat --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
-        --output="${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.maternal.log" "${PIPELINE_DIR}/launch_hifiasm_trio.sh" \
-        --pipelineDir "${PIPELINE_DIR}" \
-        --outdir "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}" \
-        --hifi "${CLEAN_DATA}/hifi.maternal" \
-        --ont "${CLEAN_DATA}/ont.maternal" \
-        --yak.mat "${YAK_HAP_MGD}" \
-        --yak.pat "${YAK_HAP_MGS}"
+    if [[ "${RUN_HIFIASM^^}" == "TRUE" || "${RUN_HIFIASM^^}" == "YES" ]]; then
+        mkdir -p "${HIFIASM_MAT_DIR}"
+        echo "+ sbatch --job-name=hifiasm_mat --cpus-per-task=64 --mem=400G --time=4-00:00:00 --output=\"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.maternal.log\" \"${PIPELINE_DIR}/launch_hifiasm_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.maternal\" --ont \"${CLEAN_DATA}/ont.maternal\" --yak.mat \"${YAK_HAP_MGD}\" --yak.pat \"${YAK_HAP_MGS}\""
+        sbatch --job-name=hifiasm_mat --cpus-per-task=64 --mem=400G --time=4-00:00:00 \
+            --output="${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}.maternal.log" "${PIPELINE_DIR}/launch_hifiasm_trio.sh" \
+            --pipelineDir "${PIPELINE_DIR}" \
+            --outdir "${HIFIASM_MAT_DIR}/${HIFIASM_OUTDIR}" \
+            --hifi "${CLEAN_DATA}/hifi.maternal" \
+            --ont "${CLEAN_DATA}/ont.maternal" \
+            --yak.mat "${YAK_HAP_MGD}" \
+            --yak.pat "${YAK_HAP_MGS}"
+    fi
 
     # Verkko Maternal F1
-    echo "+ sbatch --job-name=verkko_mat --cpus-per-task=4 --mem=64G --time=6-00:00:00 --output=\"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}.maternal.log\" \"${PIPELINE_DIR}/launch_verkko_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.maternal\" --ont \"${CLEAN_DATA}/ont.maternal\" --mtDNA \"${MTDNA_REF}\" --rDNA \"${RDNA_REF}\" --meryl.mat \"${MERYL_HAP_MGD}\" --meryl.pat \"${MERYL_HAP_MGS}\""
-    sbatch --job-name=verkko_mat --cpus-per-task=4 --mem=64G --time=6-00:00:00 \
-        --output="${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}.maternal.log" "${PIPELINE_DIR}/launch_verkko_trio.sh" \
-        --pipelineDir "${PIPELINE_DIR}" \
-        --outdir "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}" \
-        --hifi "${CLEAN_DATA}/hifi.maternal" \
-        --ont "${CLEAN_DATA}/ont.maternal" \
-        --mtDNA "${MTDNA_REF}" \
-        --rDNA "${RDNA_REF}" \
-        --meryl.mat "${MERYL_HAP_MGD}" \
-        --meryl.pat "${MERYL_HAP_MGS}"
+    if [[ "${RUN_VERKKO^^}" == "TRUE" || "${RUN_VERKKO^^}" == "YES" ]]; then
+        mkdir -p "${VERKKO_MAT_DIR}"
+        echo "+ sbatch --job-name=verkko_mat --cpus-per-task=4 --mem=64G --time=6-00:00:00 --output=\"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}.maternal.log\" \"${PIPELINE_DIR}/launch_verkko_trio.sh\" --pipelineDir \"${PIPELINE_DIR}\" --outdir \"${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}\" --hifi \"${CLEAN_DATA}/hifi.maternal\" --ont \"${CLEAN_DATA}/ont.maternal\" --mtDNA \"${MTDNA_REF}\" --rDNA \"${RDNA_REF}\" --meryl.mat \"${MERYL_HAP_MGD}\" --meryl.pat \"${MERYL_HAP_MGS}\""
+        sbatch --job-name=verkko_mat --cpus-per-task=4 --mem=64G --time=6-00:00:00 \
+            --output="${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}.maternal.log" "${PIPELINE_DIR}/launch_verkko_trio.sh" \
+            --pipelineDir "${PIPELINE_DIR}" \
+            --outdir "${VERKKO_MAT_DIR}/${VERKKO_OUTDIR}" \
+            --hifi "${CLEAN_DATA}/hifi.maternal" \
+            --ont "${CLEAN_DATA}/ont.maternal" \
+            --mtDNA "${MTDNA_REF}" \
+            --rDNA "${RDNA_REF}" \
+            --meryl.mat "${MERYL_HAP_MGD}" \
+            --meryl.pat "${MERYL_HAP_MGS}"
+    fi
 fi
 # ----------------------------------------------------------------------------------------------- #
 
