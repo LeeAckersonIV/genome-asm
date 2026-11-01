@@ -70,7 +70,7 @@ usage() {
 	echo "	--illumina.MGS.lib \ 		# library IDs for maternal grand sire [MGS] animal illumina data"
 	echo "	--illumina.MGD.lib \ 		# library IDs for maternal grand dam [MGD] animal illumina data"
 	echo "	--hifi.terminal.lib \ 		# REQUIRED; library IDs for terminal animal hifi data"
-	echo "	--hifi.maternal.lib \ 		# library IDs for maternal animal [F1] hifi data"
+	echo "	--hifi.maternal.lib \ 		# REQUIRED; library IDs for maternal animal [F1] hifi data"
 	echo "	--ont.terminal.lib \ 		# library IDs for terminal animal ONT data"
 	echo "	--ont.maternal.lib \ 		# library IDs for maternal animal [F1] ONT data"
 	echo "	--illuminaDir \ 			# parent directory containing all the illumina data"
@@ -244,10 +244,10 @@ if [[ ${#hifi_term_files[@]} -gt 0 ]]; then
     echo "Filtering terminal HiFi: ${HIFI_TERM_TAG} (MinLen: ${HIFI_LENGTH}, MinQV: ${HIFI_QV})"
     mkdir -p "${FILT_HIFI_TERM}"
     out_file="${FILT_HIFI_TERM}/${HIFI_TERM_TAG}_clean_qv${HIFI_QV}_min${HIFI_LENGTH}.fastq.gz"
-    echo "+ zcat ${hifi_term_files[*]} | chopper -t 12 -q \"$HIFI_QV\" --minlength \"$HIFI_LENGTH\" | gzip > \"$out_file\""
-    zcat "${hifi_term_files[@]}" | \
+    echo "+ pigz -dc -p 4 ${hifi_term_files[*]} | chopper -t 12 -q \"$HIFI_QV\" --minlength \"$HIFI_LENGTH\" | pigz -p 8 -1 > \"$out_file\""
+    pigz -dc -p 4 "${hifi_term_files[@]}" | \
         chopper -t 12 -q "$HIFI_QV" --minlength "$HIFI_LENGTH" | \
-        gzip > "$out_file"
+        pigz -p 8 -1 > "$out_file"
 fi
 
 ## Maternal HiFi
@@ -257,10 +257,10 @@ if [[ "$ThreeGenMode" == "YES" && "$HIFI_MAT" != "NA" ]]; then
         echo "Filtering maternal HiFi: ${HIFI_MAT_TAG} (MinLen: ${HIFI_LENGTH}, MinQV: ${HIFI_QV})"
         mkdir -p "${FILT_HIFI_MAT}"
         out_file="${FILT_HIFI_MAT}/${HIFI_MAT_TAG}_clean_qv${HIFI_QV}_min${HIFI_LENGTH}.fastq.gz"
-        echo "+ zcat ${hifi_mat_files[*]} | chopper -t 12 -q \"$HIFI_QV\" --minlength \"$HIFI_LENGTH\" | gzip > \"$out_file\""
-        zcat "${hifi_mat_files[@]}" | \
+        echo "+ pigz -dc -p 4 ${hifi_mat_files[*]} | chopper -t 12 -q \"$HIFI_QV\" --minlength \"$HIFI_LENGTH\" | pigz -p 8 -1 > \"$out_file\""
+        pigz -dc -p 4 "${hifi_mat_files[@]}" | \
             chopper -t 12 -q "$HIFI_QV" --minlength "$HIFI_LENGTH" | \
-            gzip > "$out_file"
+            pigz -p 8 -1 > "$out_file"
     fi
 fi
 
@@ -279,19 +279,19 @@ if [[ "$ONT_TERM" != "NA" ]]; then
         mkdir -p "${FILT_ONT_TERM}"
         if [[ "$ONT_LENGTH" == "NA" && "$ONT_QV" == "NA" ]]; then
             echo "Filtering terminal ONT: ${ONT_TERM_TAG} (Multi-stage Interval Filter)"
-            echo "+ zcat ${ont_term_files[*]} | tee >(chopper -t 12 -q 12 --minlength 20000 --maxlength 39999 | gzip > \"${FILT_ONT_TERM}/${ONT_TERM_TAG}_q12_20-40k.fastq.gz\") >(chopper -t 12 -q 10 --minlength 40000 --maxlength 69999 | gzip > \"${FILT_ONT_TERM}/${ONT_TERM_TAG}_q10_40-70k.fastq.gz\") >(chopper -t 12 -q 7 --minlength 70000 --maxlength 99999 | gzip > \"${FILT_ONT_TERM}/${ONT_TERM_TAG}_q7_70-100k.fastq.gz\") >(chopper -t 12 -q 5 --minlength 100000 | gzip > \"${FILT_ONT_TERM}/${ONT_TERM_TAG}_q5_100k_plus.fastq.gz\") > /dev/null"
-            zcat "${ont_term_files[@]}" | \
-            tee >(chopper -t 12 -q 12 --minlength 20000 --maxlength 39999 | gzip > "${FILT_ONT_TERM}/${ONT_TERM_TAG}_q12_20-40k.fastq.gz") \
-                >(chopper -t 12 -q 10 --minlength 40000 --maxlength 69999 | gzip > "${FILT_ONT_TERM}/${ONT_TERM_TAG}_q10_40-70k.fastq.gz") \
-                >(chopper -t 12 -q 7  --minlength 70000 --maxlength 99999 | gzip > "${FILT_ONT_TERM}/${ONT_TERM_TAG}_q7_70-100k.fastq.gz") \
-                >(chopper -t 12 -q 5  --minlength 100000                 | gzip > "${FILT_ONT_TERM}/${ONT_TERM_TAG}_q5_100k_plus.fastq.gz") \
+            echo "+ pigz -dc -p 4 ${ont_term_files[*]} | tee >(chopper -t 12 -q 12 --minlength 20000 --maxlength 39999 | pigz -p 4 -1 > \"${FILT_ONT_TERM}/${ONT_TERM_TAG}_q12_20-40k.fastq.gz\") >(chopper -t 12 -q 10 --minlength 40000 --maxlength 69999 | pigz -p 4 -1 > \"${FILT_ONT_TERM}/${ONT_TERM_TAG}_q10_40-70k.fastq.gz\") >(chopper -t 12 -q 7 --minlength 70000 --maxlength 99999 | pigz -p 4 -1 > \"${FILT_ONT_TERM}/${ONT_TERM_TAG}_q7_70-100k.fastq.gz\") >(chopper -t 12 -q 5 --minlength 100000 | pigz -p 4 -1 > \"${FILT_ONT_TERM}/${ONT_TERM_TAG}_q5_100k_plus.fastq.gz\") > /dev/null"
+            pigz -dc -p 4 "${ont_term_files[@]}" | \
+            tee >(chopper -t 12 -q 12 --minlength 20000 --maxlength 39999 | pigz -p 4 -1 > "${FILT_ONT_TERM}/${ONT_TERM_TAG}_q12_20-40k.fastq.gz") \
+                >(chopper -t 12 -q 10 --minlength 40000 --maxlength 69999 | pigz -p 4 -1 > "${FILT_ONT_TERM}/${ONT_TERM_TAG}_q10_40-70k.fastq.gz") \
+                >(chopper -t 12 -q 7  --minlength 70000 --maxlength 99999 | pigz -p 4 -1 > "${FILT_ONT_TERM}/${ONT_TERM_TAG}_q7_70-100k.fastq.gz") \
+                >(chopper -t 12 -q 5  --minlength 100000                 | pigz -p 4 -1 > "${FILT_ONT_TERM}/${ONT_TERM_TAG}_q5_100k_plus.fastq.gz") \
                 > /dev/null
         else
             echo "Filtering terminal ONT: ${ONT_TERM_TAG} @ QC=$ONT_QV and Length=$ONT_LENGTH"
             out_file="${FILT_ONT_TERM}/${ONT_TERM_TAG}_qv${ONT_QV}_min${ONT_LENGTH}.fastq.gz"
-            echo "+ zcat ${ont_term_files[*]} | chopper -t 12 -q $ONT_QV --minlength $ONT_LENGTH | gzip > \"$out_file\""
-            zcat "${ont_term_files[@]}" | \
-                chopper -t 12 -q "$ONT_QV" --minlength "$ONT_LENGTH" | gzip > "$out_file"
+            echo "+ pigz -dc -p 4 ${ont_term_files[*]} | chopper -t 12 -q $ONT_QV --minlength $ONT_LENGTH | pigz -p 8 -1 > \"$out_file\""
+            pigz -dc -p 4 "${ont_term_files[@]}" | \
+                chopper -t 12 -q "$ONT_QV" --minlength "$ONT_LENGTH" | pigz -p 8 -1 > "$out_file"
         fi
 
         readarray -t ont_term_filt_files < <(find -L "${FILT_ONT_TERM}" -type f \( -name "*.fastq.gz" -o -name "*.fq.gz" \))
@@ -309,19 +309,19 @@ if [[ "$ThreeGenMode" == "YES" && "$ONT_MAT" != "NA" ]]; then
         mkdir -p "${FILT_ONT_MAT}"
         if [[ "$ONT_LENGTH" == "NA" && "$ONT_QV" == "NA" ]]; then
             echo "Filtering maternal ONT: ${ONT_MAT_TAG} (Multi-stage Interval Filter)"
-            echo "+ zcat ${ont_mat_files[*]} | tee >(chopper -t 12 -q 12 --minlength 20000 --maxlength 39999 | gzip > \"${FILT_ONT_MAT}/${ONT_MAT_TAG}_q12_20-40k.fastq.gz\") >(chopper -t 12 -q 10 --minlength 40000 --maxlength 69999 | gzip > \"${FILT_ONT_MAT}/${ONT_MAT_TAG}_q10_40-70k.fastq.gz\") >(chopper -t 12 -q 7 --minlength 70000 --maxlength 99999 | gzip > \"${FILT_ONT_MAT}/${ONT_MAT_TAG}_q7_70-100k.fastq.gz\") >(chopper -t 12 -q 5 --minlength 100000 | gzip > \"${FILT_ONT_MAT}/${ONT_MAT_TAG}_q5_100k_plus.fastq.gz\") > /dev/null"
-            zcat "${ont_mat_files[@]}" | \
-            tee >(chopper -t 12 -q 12 --minlength 20000 --maxlength 39999 | gzip > "${FILT_ONT_MAT}/${ONT_MAT_TAG}_q12_20-40k.fastq.gz") \
-                >(chopper -t 12 -q 10 --minlength 40000 --maxlength 69999 | gzip > "${FILT_ONT_MAT}/${ONT_MAT_TAG}_q10_40-70k.fastq.gz") \
-                >(chopper -t 12 -q 7  --minlength 70000 --maxlength 99999 | gzip > "${FILT_ONT_MAT}/${ONT_MAT_TAG}_q7_70-100k.fastq.gz") \
-                >(chopper -t 12 -q 5  --minlength 100000                 | gzip > "${FILT_ONT_MAT}/${ONT_MAT_TAG}_q5_100k_plus.fastq.gz") \
+            echo "+ pigz -dc -p 4 ${ont_mat_files[*]} | tee >(chopper -t 12 -q 12 --minlength 20000 --maxlength 39999 | pigz -p 4 -1 > \"${FILT_ONT_MAT}/${ONT_MAT_TAG}_q12_20-40k.fastq.gz\") >(chopper -t 12 -q 10 --minlength 40000 --maxlength 69999 | pigz -p 4 -1 > \"${FILT_ONT_MAT}/${ONT_MAT_TAG}_q10_40-70k.fastq.gz\") >(chopper -t 12 -q 7 --minlength 70000 --maxlength 99999 | pigz -p 4 -1 > \"${FILT_ONT_MAT}/${ONT_MAT_TAG}_q7_70-100k.fastq.gz\") >(chopper -t 12 -q 5 --minlength 100000 | pigz -p 4 -1 > \"${FILT_ONT_MAT}/${ONT_MAT_TAG}_q5_100k_plus.fastq.gz\") > /dev/null"
+            pigz -dc -p 4 "${ont_mat_files[@]}" | \
+            tee >(chopper -t 12 -q 12 --minlength 20000 --maxlength 39999 | pigz -p 4 -1 > "${FILT_ONT_MAT}/${ONT_MAT_TAG}_q12_20-40k.fastq.gz") \
+                >(chopper -t 12 -q 10 --minlength 40000 --maxlength 69999 | pigz -p 4 -1 > "${FILT_ONT_MAT}/${ONT_MAT_TAG}_q10_40-70k.fastq.gz") \
+                >(chopper -t 12 -q 7  --minlength 70000 --maxlength 99999 | pigz -p 4 -1 > "${FILT_ONT_MAT}/${ONT_MAT_TAG}_q7_70-100k.fastq.gz") \
+                >(chopper -t 12 -q 5  --minlength 100000                 | pigz -p 4 -1 > "${FILT_ONT_MAT}/${ONT_MAT_TAG}_q5_100k_plus.fastq.gz") \
                 > /dev/null
         else
             echo "Filtering maternal ONT: ${ONT_MAT_TAG} @ QC=$ONT_QV and Length=$ONT_LENGTH"
             out_file="${FILT_ONT_MAT}/${ONT_MAT_TAG}_qv${ONT_QV}_min${ONT_LENGTH}.fastq.gz"
-            echo "+ zcat ${ont_mat_files[*]} | chopper -t 12 -q $ONT_QV --minlength $ONT_LENGTH | gzip > \"$out_file\""
-            zcat "${ont_mat_files[@]}" | \
-                chopper -t 12 -q "$ONT_QV" --minlength "$ONT_LENGTH" | gzip > "$out_file"
+            echo "+ pigz -dc -p 4 ${ont_mat_files[*]} | chopper -t 12 -q $ONT_QV --minlength $ONT_LENGTH | pigz -p 8 -1 > \"$out_file\""
+            pigz -dc -p 4 "${ont_mat_files[@]}" | \
+                chopper -t 12 -q "$ONT_QV" --minlength "$ONT_LENGTH" | pigz -p 8 -1 > "$out_file"
         fi
 
         readarray -t ont_mat_filt_files < <(find -L "${FILT_ONT_MAT}" -type f \( -name "*.fastq.gz" -o -name "*.fq.gz" \))
