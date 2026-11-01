@@ -25,6 +25,9 @@ mkdir -p "${OUTDIR}"
 
 module load BUSCO/5.8.2-foss-2023a
 
+# Change working directory so busco_<PID>.log files are saved inside OUTDIR
+cd "${OUTDIR}"
+
 echo "----------------------------------------------------------------"
 echo "Launching BUSCO Gene Completeness Analysis..."
 echo "Output Directory: ${OUTDIR}"

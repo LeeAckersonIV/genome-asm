@@ -23,6 +23,10 @@ else
     exit 1
 fi
 
+# Set scratch temp directory to prevent compute node /tmp overflow
+export TMPDIR="/mnt/gs21/scratch/ackers24/tmp"
+mkdir -p "$TMPDIR"
+
 echo "+ ${VERKKO_SOFTWARE} --version"
 "${VERKKO_SOFTWARE}" --version
 
@@ -61,6 +65,9 @@ fi
 
 # Add kmers and trio to end of command
 VERKKO_CMD+=(--hap-kmers "${MAT_HAPMERS}" "${PAT_HAPMERS}" trio)
+
+# Append Snakemake options for 128GB consensus memory allocation and TMPDIR propagation
+VERKKO_CMD+=(--snakeopts "--set-resources combineConsensus:mem_gb=128 --envvars TMPDIR --retries 3 --latency-wait 60")
 
 # Verbose execution logging
 echo "----------------------------------------------------------------"
