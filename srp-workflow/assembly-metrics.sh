@@ -471,11 +471,20 @@ run_merqury_qv() {
 		--wrap="
 			unset SLURM_SUBMIT_DIR
 			cd ${out_dir}
+			
+			# Load required dependencies for Merqury helper scripts
+			module load SAMtools BEDTools R
+			if [[ -f \"${PIPELINE_DIR}/env.bashrc\" ]]; then
+				source \"${PIPELINE_DIR}/env.bashrc\"
+			fi
+			export PATH=\"\$MERYL_SOFTWARE:\$MERQURY_SOFTWARE:\$MERQURY_SOFTWARE/build:\$PATH\"
+
 			ln -sf ${meryl_read} illumina.meryl
 			ln -sf ${meryl_mat} mat.meryl
 			ln -sf ${meryl_pat} pat.meryl
 			ln -sf ${hap1_fasta} hap1.fasta
 			ln -sf ${hap2_fasta} hap2.fasta
+
 			${MERQURY_SOFTWARE}/merqury.sh illumina.meryl mat.meryl pat.meryl hap1.fasta hap2.fasta ${out_prefix}
 		"
 }
