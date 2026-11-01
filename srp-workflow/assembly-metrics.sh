@@ -461,7 +461,7 @@ run_merqury_qv() {
 
 	mkdir -p "$out_dir"
 
-	echo "+ sbatch --job-name=qv-${out_prefix} --chdir=${out_dir} --cpus-per-task=16 --mem=64G --time=6:00:00 --output=${out_dir}/merqury.log"
+	echo "+ sbatch --job-name=qv-${out_prefix} --chdir=${out_dir} --cpus-per-task=16 --mem=128G --time=12:00:00 --output=${out_dir}/merqury.log"
 	sbatch --job-name="qv-${out_prefix}" \
 		--chdir="$out_dir" \
 		--cpus-per-task=16 \
