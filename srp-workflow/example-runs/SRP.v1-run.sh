@@ -239,7 +239,7 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP11 --load.project.pa
 
 cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
 
-${SRP_WORKFLOW}/prepangenome.sh --srpDirs "SRP1,SRP2,SRP3,SRP4,SRP5,SRP6,SRP9,SRP11" --outdir ${PWD}/SRP.v1-prepangenome
+${SRP_WORKFLOW}/prepangenome.sh --srpDirs "SRP1,SRP2,SRP3,SRP4,SRP5,SRP6,SRP9,SRP11" --outdir ${PWD}/SRP.v1-pangenome
 
 # ==================================================== Stage 5 for SRP 1,2,3,4,5,6,9,11 ==================================================== #
 

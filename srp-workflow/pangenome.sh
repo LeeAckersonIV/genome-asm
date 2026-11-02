@@ -2,17 +2,8 @@
 
 # =============================================================================================== #
 # Script: pangenome.sh
-# Purpose: Build Minigraph-Cactus and/or PGGB pangenome graphs from harvested assemblies,
-#          including automated PanSN header formatting and ODGI graph visualizations.
-# Author: Lee Ackerson {ackers24@msu.edu}
-# ----------------------------------------------------------------------------------------------- #
-# Usage Example:
-#   ./pangenome.sh \
-#     --pangenomeDir pangenome_prep \
-#     --ref.genome SRP1_maternal_hifiasm_hap1 \
-#     --run.cactus TRUE \
-#     --run.pggb TRUE \
-#     --run.odgi TRUE
+# Purpose: Format assemblies to PanSN standards and launch Minigraph-Cactus, PGGB, and ODGI.
+# Default Reference Backbone: REF_HxYL_ncbi_hap2 (Maternal YL 2.0)
 # =============================================================================================== #
 
 usage() {
@@ -21,8 +12,7 @@ usage() {
 	echo ""
 	echo "Options:"
 	echo "  --pangenomeDir     Directory containing assemblies prepared by prepangenome.sh (REQUIRED)"
-	echo "  --ref.genome       Name of backbone reference genome tag (REQUIRED; e.g. SRP1_maternal_hifiasm_hap1)"
-	echo "  --ref.fasta        Path to external reference FASTA file (optional)"
+	echo "  --ref.genome       Name of backbone reference sample tag (default: REF_HxYL_ncbi_hap2)"
 	echo "  --cactus.sif       Path to Cactus Singularity image (default: /mnt/research/qgg/software/cactus/cactus_v3.1.4.sif)"
 	echo "  --run.cactus       Run Minigraph-Cactus pangenome construction (TRUE/FALSE; default: TRUE)"
 	echo "  --run.pggb         Run PGGB pangenome construction (TRUE/FALSE; default: TRUE)"
@@ -37,8 +27,7 @@ usage() {
 
 # Default parameters
 PREP_DIR=""
-REF_GENOME=""
-REF_FASTA=""
+REF_GENOME="REF_HxYL_ncbi_hap2"
 CACTUS_SIF="/mnt/research/qgg/software/cactus/cactus_v3.1.4.sif"
 RUN_CACTUS="TRUE"
 RUN_PGGB="TRUE"
@@ -51,7 +40,6 @@ while [[ $# -gt 0 ]]; do
 	case "$1" in
 		--pangenomeDir) PREP_DIR="$2"; shift 2 ;;
 		--ref.genome)   REF_GENOME="$2"; shift 2 ;;
-		--ref.fasta)    REF_FASTA="$2"; shift 2 ;;
 		--cactus.sif)   CACTUS_SIF="$2"; shift 2 ;;
 		--run.cactus)   RUN_CACTUS="$2"; shift 2 ;;
 		--run.pggb)     RUN_PGGB="$2"; shift 2 ;;
@@ -74,11 +62,6 @@ if [[ -z "$PREP_DIR" || ! -d "$PREP_DIR" ]]; then
 	usage
 fi
 
-if [[ -z "$REF_GENOME" ]]; then
-	echo "Error: --ref.genome tag is required (must match a harvested sample name or external reference tag)."
-	usage
-fi
-
 PREP_DIR=$(readlink -f "$PREP_DIR")
 ASSEMBLY_DIR="${PREP_DIR}/assemblies"
 PANGENOME_OUT="${PREP_DIR}/pangenome_build"
@@ -89,7 +72,7 @@ PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "========================================================================"
 echo "Initiating Pangenome Construction Pipeline..."
 echo "Assembly Source: ${ASSEMBLY_DIR}"
-echo "Reference Tag:   ${REF_GENOME}"
+echo "Backbone Reference Tag: ${REF_GENOME}"
 echo "Build Directory: ${PANGENOME_OUT}"
 echo "========================================================================"
 
@@ -101,7 +84,6 @@ fi
 
 # ----------------------------------------------------------------------------------------------- #
 # Step 1: PanSN FASTA Header Formatting
-# PanSN Format: Sample#Haplotype#ContigID
 # ----------------------------------------------------------------------------------------------- #
 PANSN_DIR="${PANGENOME_OUT}/pansn_genomes"
 mkdir -p "${PANSN_DIR}"
@@ -111,7 +93,7 @@ PANSN_FASTAS=()
 
 for fa in "${ASSEMBLIES[@]}"; do
 	base=$(basename "$fa" .fasta)
-	sample_name="${base//./_}" # Converts SRP1.maternal.hifiasm.hap1 -> SRP1_maternal_hifiasm_hap1
+	sample_name="${base//./_}"
 	
 	pansn_fa="${PANSN_DIR}/${base}.pansn.fa"
 	echo "  Formatting ${base} -> ${sample_name}#1#..."
@@ -120,17 +102,15 @@ for fa in "${ASSEMBLIES[@]}"; do
 	PANSN_FASTAS+=("$pansn_fa")
 done
 
-# Optional: Format external reference FASTA if supplied
-if [[ -n "$REF_FASTA" && -f "$REF_FASTA" ]]; then
-	echo "  Formatting external reference ${REF_GENOME}..."
-	pansn_ref="${PANSN_DIR}/${REF_GENOME}.pansn.fa"
-	awk -v prefix="${REF_GENOME}#1#" '/^>/{print ">" prefix substr($1,2); next} {print}' "$REF_FASTA" > "$pansn_ref"
-	PANSN_FASTAS+=("$pansn_ref")
-fi
-
-# Concatenate all PanSN FASTAs into a single multi-FASTA for PGGB
 COMBINED_FA="${PANGENOME_OUT}/all_assemblies.pansn.fa"
 cat "${PANSN_FASTAS[@]}" > "$COMBINED_FA"
+
+if ! grep -q ">${REF_GENOME}#1#" "$COMBINED_FA"; then
+	echo "Error: Reference tag '${REF_GENOME}' was not found in formatted PanSN sequences."
+	echo "Available sample tags:"
+	grep -oP '^>[^#]+' "$COMBINED_FA" | sort -u | tr -d '>'
+	exit 1
+fi
 
 # ----------------------------------------------------------------------------------------------- #
 # Step 2: Minigraph-Cactus Pangenome Pipeline
@@ -250,11 +230,9 @@ if [[ -d "\$CHROM_DIR" ]]; then
 	for og in \${CHROM_DIR}/*.og; do
 		base=\$(basename "\$og" .og)
 		
-		# 1D Linear Depth Scan
 		singularity exec --cleanenv -B /mnt/research,/mnt/gs21 "${CACTUS_SIF}" \\
 			odgi viz -i "\$og" -o "\${base}_1D_scan.png" -z -P -x 5000 -y 1000
 
-		# 2D Graph Layout Sorting and Rendering
 		singularity exec --cleanenv -B /mnt/research,/mnt/gs21 "${CACTUS_SIF}" \\
 			odgi sort -i "\$og" -o "\${base}_sorted.og" -O -p b
 

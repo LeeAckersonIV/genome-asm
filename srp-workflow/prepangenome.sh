@@ -2,12 +2,8 @@
 
 # =============================================================================================== #
 # Script: prepangenome.sh
-# Purpose: Consolidate genome assemblies from multiple SRP project directories into a single 
-#          pangenome preparation folder with PanSN-compatible syntax, and compile a master QC TSV.
-# Author: Lee Ackerson {ackers24@msu.edu}
-# ----------------------------------------------------------------------------------------------- #
-# Usage Example:
-#   ./prepangenome.sh --srpDirs "SRP1,SRP2" --outdir pangenome_prep
+# Purpose: Download/clean 5 public NCBI reference assemblies and harvest finished SRP project
+#          assemblies into a unified pangenome prep folder with a master QC summary.
 # =============================================================================================== #
 
 usage() {
@@ -15,9 +11,11 @@ usage() {
 	echo "Usage: $0 [OPTIONS]"
 	echo ""
 	echo "Options:"
-	echo "  --srpDirs      Comma-separated list of SRP project directory paths (e.g. SRP1,SRP2)"
-	echo "  --outdir       Output directory for consolidated pangenome prep (default: pangenome_prep)"
-	echo "  --help         Display this help message"
+	echo "  --srpDirs          Comma-separated list of SRP project directory paths (REQUIRED)"
+	echo "  --outdir           Output directory for consolidated pangenome prep (default: pangenome_prep)"
+	echo "  --includePublicRefs Include 5 public pig reference genomes (TRUE/FALSE; default: TRUE)"
+	echo "  --refCacheDir      Directory to cache raw downloaded reference FASTAs (default: <outdir>/public_refs)"
+	echo "  --help             Display this help message"
 	echo ""
 	exit 1
 }
@@ -25,13 +23,17 @@ usage() {
 # Parse options
 SRP_DIRS_RAW=""
 OUTDIR="pangenome_prep"
+INCLUDE_PUBLIC_REFS="TRUE"
+REF_CACHE_DIR=""
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
-		--srpDirs)  SRP_DIRS_RAW="$2"; shift 2 ;;
-		--outdir)   OUTDIR="$2"; shift 2 ;;
-		--help)     usage ;;
-		*)          echo "Error: Unknown option $1"; usage ;;
+		--srpDirs)           SRP_DIRS_RAW="$2"; shift 2 ;;
+		--outdir)            OUTDIR="$2"; shift 2 ;;
+		--includePublicRefs) INCLUDE_PUBLIC_REFS="$2"; shift 2 ;;
+		--refCacheDir)       REF_CACHE_DIR="$2"; shift 2 ;;
+		--help)              usage ;;
+		*)                   echo "Error: Unknown option $1"; usage ;;
 	esac
 done
 
@@ -40,23 +42,107 @@ if [[ -z "$SRP_DIRS_RAW" ]]; then
 	usage
 fi
 
+is_true() {
+	local val="${1^^}"
+	[[ "$val" == "TRUE" || "$val" == "YES" || "$val" == "1" ]]
+}
+
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTDIR=$(readlink -f "$OUTDIR")
 ASSEMBLY_DIR="${OUTDIR}/assemblies"
 mkdir -p "${ASSEMBLY_DIR}"
+
+if [[ -z "$REF_CACHE_DIR" ]]; then
+	REF_CACHE_DIR="${OUTDIR}/public_refs"
+fi
+mkdir -p "${REF_CACHE_DIR}"
 
 IFS=',' read -ra SRP_ARRAY <<< "$SRP_DIRS_RAW"
 
 echo "========================================================================"
 echo "Initiating Pangenome Assembly Preparation..."
 echo "Output Directory: ${OUTDIR}"
+echo "Public Reference Cache: ${REF_CACHE_DIR}"
 echo "========================================================================"
 
 # Prepare Master Summary TSV
 SUMMARY_TSV="${OUTDIR}/pangenome_assembly_qc_summary.tsv"
 echo -e "Project\tSample\tAssembler\tHaplotype\tAssembly_File\tTotal_Length_bp\tContig_N50_bp\tBUSCO_Complete_pct\tBUSCO_Single_pct\tBUSCO_Dup_pct\tMerqury_QV\tT2T_Contigs" > "${SUMMARY_TSV}"
 
-# Map directory lookups
+calc_fasta_metrics() {
+	awk '
+		/^>/ { if (seqlen) len[i++] = seqlen; seqlen = 0; next }
+		{ seqlen += length($0) }
+		END {
+			if (seqlen) len[i++] = seqlen;
+			tot = 0; for (j in len) tot += len[j];
+			n = i;
+			for (m=0; m<n-1; m++) {
+				for (k=m+1; k<n; k++) {
+					if (len[m] < len[k]) { tmp = len[m]; len[m] = len[k]; len[k] = tmp; }
+				}
+			}
+			half = tot / 2; running = 0; n50 = 0;
+			for (m=0; m<n; m++) {
+				running += len[m];
+				if (running >= half) { n50 = len[m]; break; }
+			}
+			print tot "\t" n50;
+		}
+	' "$1"
+}
+
+# ----------------------------------------------------------------------------------------------- #
+# Step 1: Process Public Reference Genomes
+# ----------------------------------------------------------------------------------------------- #
+if is_true "$INCLUDE_PUBLIC_REFS"; then
+	echo -e "\n------------------------------------------------------------------------"
+	echo "Downloading and pre-processing Public Reference Genomes..."
+	echo "------------------------------------------------------------------------"
+
+	PUBLIC_REFS=(
+		"T2TSscrofa|ncbi|hap1|https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/003/025/GCA_000003025.7_T2T-Sscrofa/GCA_000003025.7_T2T-Sscrofa_genomic.fna.gz"
+		"Bamei|ncbi|hap1|https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/030/704/935/GCA_030704935.2_ASM3070493v2/GCA_030704935.2_ASM3070493v2_genomic.fna.gz"
+		"Wuzhishan|ncbi|hap1|https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/048/338/725/GCA_048338725.1_T2T_pig1.0/GCA_048338725.1_T2T_pig1.0_genomic.fna.gz"
+		"HxYL|ncbi|hap1|https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/054/392/225/GCA_054392225.1_Sscrofa_HxYL_paternal_Hampshire_1.0/GCA_054392225.1_Sscrofa_HxYL_paternal_Hampshire_1.0_genomic.fna.gz"
+		"HxYL|ncbi|hap2|https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/054/392/235/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz"
+	)
+
+	for entry in "${PUBLIC_REFS[@]}"; do
+		IFS='|' read -r sample tool hap url <<< "$entry"
+		
+		tag="${sample}_${hap}"
+		gz_file="${REF_CACHE_DIR}/${tag}.fna.gz"
+		raw_fna="${REF_CACHE_DIR}/${tag}.fna"
+		
+		target_name="REF.${sample}.${tool}.${hap}.fasta"
+		dest_fasta="${ASSEMBLY_DIR}/${target_name}"
+
+		if [[ ! -f "$raw_fna" && ! -f "$dest_fasta" ]]; then
+			echo "  [DOWNLOADING] ${sample} (${hap}) from NCBI..."
+			wget -q -O "$gz_file" "$url"
+			gunzip -f "$gz_file"
+		fi
+
+		if [[ ! -f "$dest_fasta" ]]; then
+			echo "  [CLEANING HEADERS] ${tag} -> ${target_name}"
+			sed 's/ .*//' "$raw_fna" > "$dest_fasta"
+		else
+			echo "  [FOUND CACHED] ${target_name}"
+		fi
+
+		read tot_len n50_val <<< $(calc_fasta_metrics "$dest_fasta")
+		echo -e "PUBLIC\t${sample}\t${tool}\t${hap}\t${target_name}\t${tot_len}\t${n50_val}\tNA\tNA\tNA\tNA\tNA" >> "${SUMMARY_TSV}"
+	done
+fi
+
+# ----------------------------------------------------------------------------------------------- #
+# Step 2: Harvest SRP Assemblies
+# ----------------------------------------------------------------------------------------------- #
+echo -e "\n------------------------------------------------------------------------"
+echo "Harvesting SRP Project Assemblies..."
+echo "------------------------------------------------------------------------"
+
 declare -A ASM_MAP=(
 	["terminal.hifiasm.hap1"]="hifiasm.terminal/hifiasm_trio.dip.hap1.p_ctg.fasta"
 	["terminal.hifiasm.hap2"]="hifiasm.terminal/hifiasm_trio.dip.hap2.p_ctg.fasta"
@@ -79,7 +165,6 @@ for srp_path in "${SRP_ARRAY[@]}"; do
 		rel_path="${ASM_MAP[$key]}"
 		src_fasta="${srp_abs}/${rel_path}"
 
-		# Fallback: Convert GFA to FASTA if FASTA is missing
 		if [[ ! -f "$src_fasta" ]]; then
 			gfa_src="${src_fasta%.fasta}.gfa"
 			if [[ -f "$gfa_src" ]]; then
@@ -95,13 +180,7 @@ for srp_path in "${SRP_ARRAY[@]}"; do
 			echo "  [FOUND] ${key} -> Copying to ${target_name}"
 			cp -f "$src_fasta" "$dest_fasta"
 
-			# ------------------------------------------------------------------ #
-			# Gather Metrics
-			# ------------------------------------------------------------------ #
-			
-			# 1. N50 & Total Length (Dynamic QUAST Header Parsing)
-			total_len="NA"
-			n50_val="NA"
+			total_len="NA"; n50_val="NA"
 			quast_report="${srp_abs}/assemblyQC/N50/${sample}.${tool}.quast/transposed_report.tsv"
 			if [[ -f "$quast_report" ]]; then
 				read total_len n50_val <<< $(awk -F'\t' -v hap="$hap" '
@@ -118,13 +197,10 @@ for srp_path in "${SRP_ARRAY[@]}"; do
 							if (n50_col) n_val = $n50_col;
 						}
 					}
-					END {
-						print (t_val ? t_val : "NA"), (n_val ? n_val : "NA");
-					}
+					END { print (t_val ? t_val : "NA"), (n_val ? n_val : "NA"); }
 				' "$quast_report")
 			fi
 
-			# 2. BUSCO Metrics (Recursive File Search)
 			busco_comp="NA"; busco_single="NA"; busco_dup="NA"
 			busco_dir="${srp_abs}/assemblyQC/BUSCO/${sample}.${tool}.busco"
 			if [[ -d "$busco_dir" ]]; then
@@ -144,7 +220,6 @@ for srp_path in "${SRP_ARRAY[@]}"; do
 				fi
 			fi
 
-			# 3. Merqury QV
 			qv_val="NA"
 			qv_file="${srp_abs}/assemblyQC/QV/${tool}.${sample}/${tool}.${sample}.qv"
 			if [[ -f "$qv_file" ]]; then
@@ -155,7 +230,6 @@ for srp_path in "${SRP_ARRAY[@]}"; do
 				[[ -z "$qv_val" ]] && qv_val="NA"
 			fi
 
-			# 4. T2T Contigs (Matches explicit sample.tool.hap tag)
 			t2t_cnt="NA"
 			t2t_file="${srp_abs}/assemblyQC/T2T/t2t_summary.tsv"
 			if [[ -f "$t2t_file" ]]; then
@@ -168,8 +242,6 @@ for srp_path in "${SRP_ARRAY[@]}"; do
 			fi
 
 			echo -e "${srp_id}\t${sample}\t${tool}\t${hap}\t${target_name}\t${total_len}\t${n50_val}\t${busco_comp}\t${busco_single}\t${busco_dup}\t${qv_val}\t${t2t_cnt}" >> "${SUMMARY_TSV}"
-		else
-			echo "  [MISSING] ${src_fasta} (Skipping)"
 		fi
 	done
 done
