@@ -235,7 +235,13 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP9 --load.project.par
 ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP11 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --eval.verkko FALSE &> ${PWD}/SRP11/assembly-metrics.log
 
 
+# ==================================================== Stage 4 for SRP 1,2,3,4,5,6,9,11 ==================================================== #
 
+cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
+
+${SRP_WORKFLOW}/prepangenome.sh --srpDirs "SRP1,SRP2,SRP3,SRP4,SRP5,SRP6,SRP9,SRP11" --outdir ${PWD}/SRP.v1-prepangenome
+
+# ==================================================== Stage 5 for SRP 1,2,3,4,5,6,9,11 ==================================================== #
 
 
 
