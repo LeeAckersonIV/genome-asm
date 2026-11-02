@@ -23,6 +23,7 @@ export MERYL="/mnt/research/qgg/software/meryl-1.4.1/bin"
 export HIFIASM_SOFTWARE="/mnt/research/qgg/software/hifiasm-0.25.0-r726/hifiasm"
 export VERKKO_SOFTWARE="/mnt/research/qgg/software/verkko-2.3.2/verkko"
 export YAK_SOFTWARE="/mnt/research/qgg/software/yak-0.1-r69/yak"
+export CACTUS_SOFTWARE="/mnt/research/qgg/software/cactus/cactus_v3.1.4.sif"
 export PATH="$MERYL:$PATH"
 export PATH="$MERYL_SOFTWARE:$PATH"
 export PATH="$MERQURY_SOFTWARE:$MERQURY_SOFTWARE/build:$PATH"
@@ -50,6 +51,7 @@ export LOAD_PARAMS_CONFIG="NO"
 # Nanopack (Chopper): 	micromamba create -n nanopack -c conda-forge -c bioconda chopper
 # Verkko 2.3.2: 		micromamba create -n verkkov2.3.2 -c conda-forge -c bioconda -c defaults verkko
 # HiFiasm: 				micromamba create -n hifiasm -c conda-forge -c bioconda hifiasm
+# PGGB:					micromamba create -n pggb -c conda-forge -c bioconda pggb
 # ----------------------------------------------------------------------------------------------- #
 
 

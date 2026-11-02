@@ -243,7 +243,13 @@ ${SRP_WORKFLOW}/prepangenome.sh --srpDirs "SRP1,SRP2,SRP3,SRP4,SRP5,SRP6,SRP9,SR
 
 # ==================================================== Stage 5 for SRP 1,2,3,4,5,6,9,11 ==================================================== #
 
+cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
 
+${SRP_WORKFLOW}/pangenome.sh \
+  --pangenomeDir pangenome_prep \
+  --run.cactus TRUE \
+  --run.pggb TRUE \
+  --run.odgi FALSE
 
 
 
