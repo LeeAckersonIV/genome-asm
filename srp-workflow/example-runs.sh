@@ -4,7 +4,8 @@ Test-Case Workflow Runs
 # This example has several LibraryIDs for individuals, as well as several files within a single LibraryID.
 
 # Move to scratch space with plenty of storage space
-cd /mnt/gs21/scratch/ackers24/srp-sandbox
+mkdir -p /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
+cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
 
 # Run initialize.sh {paternal has seveal illumina runs within one library ID; terminal HiFi has several LIBIDs }
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP1 \
@@ -42,7 +43,7 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT SRP1 --load.project.params YES
 
 # ==================================================== SRP 2 ==================================================== #
 # Move to scratch space with plenty of storage space
-cd /mnt/gs21/scratch/ackers24/srp-sandbox
+cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP2 \
@@ -80,7 +81,7 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT SRP2 --load.project.params YES
 
 # ==================================================== SRP 3 ==================================================== #
 # Move to scratch space with plenty of storage space
-cd /mnt/gs21/scratch/ackers24/srp-sandbox
+cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP3 \
@@ -118,7 +119,7 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT SRP3 --load.project.params YES
 
 # ==================================================== SRP 4 ==================================================== #
 # Move to scratch space with plenty of storage space
-cd /mnt/gs21/scratch/ackers24/srp-sandbox
+cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP4 \
@@ -156,7 +157,7 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT SRP4 --load.project.params YES
 
 # ==================================================== SRP 5 ==================================================== #
 # Move to scratch space with plenty of storage space
-cd /mnt/gs21/scratch/ackers24/srp-sandbox
+cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP5 \
@@ -194,7 +195,7 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT SRP5 --load.project.params YES
 
 # ==================================================== SRP 6 ==================================================== #
 # Move to scratch space with plenty of storage space
-cd /mnt/gs21/scratch/ackers24/srp-sandbox
+cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP6 \
@@ -245,7 +246,7 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT SRP6 --load.project.params YES
 # ==================================================== SRP 9 ==================================================== #
 # #################################### NOTE: Suspicious Library 29 OCT 2026 ##################################### #
 # Move to scratch space with plenty of storage space
-cd /mnt/gs21/scratch/ackers24/srp-sandbox
+cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP9 \
@@ -289,7 +290,7 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT SRP9 --load.project.params YES
 
 # ==================================================== SRP11 ==================================================== #
 # Move to scratch space with plenty of storage space
-cd /mnt/gs21/scratch/ackers24/srp-sandbox
+cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
 
 # Run initialize.sh
 "${SRP_WORKFLOW}/initialize.sh" --projectROOT SRP11 \
