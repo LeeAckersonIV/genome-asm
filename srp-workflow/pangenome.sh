@@ -1,326 +1,221 @@
 #!/bin/bash -l
 
 # =============================================================================================== #
-# Script: pangenome.sh
-# Purpose: Format assemblies to PanSN standards and launch Minigraph-Cactus, PGGB, and ODGI.
-# Default Reference Backbone: REF_HxYL_ncbi_hap2 (Maternal YL 2.0)
+# Script to prepare PanSN-formatted assemblies, generate SLURM submission scripts, and option-
+# ally submit Minigraph-Cactus, PGGB, and ODGI pangenome graph construction jobs.
+# Author: Lee Ackerson {ackers24@msu.edu}
 # =============================================================================================== #
 
-log() {
-	echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
-}
+set -euo pipefail
 
+# Internal Defaults
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_BASHRC="${PIPELINE_DIR}/env.bashrc"
+PROJECT_ROOT="$PWD"
+PANGENOME_DIR="pangenome_prep"
+REF_NAME="REF_HxYL_ncbi_hap2"
+RUN_CACTUS="FALSE"
+RUN_PGGB="FALSE"
+RUN_ODGI="FALSE"
 
-# Automatically source env.bashrc if available
-if [[ -f "$ENV_BASHRC" ]]; then
-	log "Sourcing pipeline environment: ${ENV_BASHRC}"
-	source "$ENV_BASHRC"
-fi
-
-usage() {
-	echo ""
-	echo "Usage: $0 [OPTIONS]"
-	echo ""
-	echo "Options:"
-	echo "  --pangenomeDir     Directory containing assemblies prepared by prepangenome.sh (REQUIRED)"
-	echo "  --ref.genome       Name of backbone reference sample tag (default: REF_HxYL_ncbi_hap2)"
-	echo "  --cactus.sif       Path to Cactus Singularity image (default: \$CACTUS_SOFTWARE or /mnt/research/qgg/software/cactus/cactus_v3.1.4.sif)"
-	echo "  --micromamba.env   Micromamba environment name for PGGB/ODGI (default: pggb)"
-	echo "  --segment.len      PGGB segment length -s in bp (default: 50000)"
-	echo "  --map.pct          PGGB minimum mapping percent identity -p (default: 98)"
-	echo "  --run.cactus       Run Minigraph-Cactus pangenome construction (TRUE/FALSE; default: TRUE)"
-	echo "  --run.pggb         Run PGGB pangenome construction (TRUE/FALSE; default: TRUE)"
-	echo "  --run.odgi         Generate ODGI 1D/2D visualization plots (TRUE/FALSE; default: TRUE)"
-	echo "  --cpus             CPUs per SLURM job (default: 64)"
-	echo "  --mem              Memory per SLURM job (default: 500G)"
-	echo "  --time             Walltime per SLURM job (default: 48:00:00)"
-	echo "  --help             Display this help message"
-	echo ""
-	exit 1
-}
-
-# Default parameters
-PREP_DIR=""
-REF_GENOME="REF_HxYL_ncbi_hap2"
-CACTUS_SIF="${CACTUS_SOFTWARE:-/mnt/research/qgg/software/cactus/cactus_v3.1.4.sif}"
-MICROMAMBA_ENV="pggb"
-SEGMENT_LEN=50000
-MAP_PCT=98
-RUN_CACTUS="TRUE"
-RUN_PGGB="TRUE"
-RUN_ODGI="TRUE"
-CPUS=64
-MEM="500G"
-WALLTIME="48:00:00"
-
+# 1. Parse Input Arguments
 while [[ $# -gt 0 ]]; do
 	case "$1" in
-		--pangenomeDir)   PREP_DIR="$2"; shift 2 ;;
-		--ref.genome)     REF_GENOME="$2"; shift 2 ;;
-		--cactus.sif)     CACTUS_SIF="$2"; shift 2 ;;
-		--micromamba.env) MICROMAMBA_ENV="$2"; shift 2 ;;
-		--segment.len)    SEGMENT_LEN="$2"; shift 2 ;;
-		--map.pct)        MAP_PCT="$2"; shift 2 ;;
-		--run.cactus)      RUN_CACTUS="$2"; shift 2 ;;
-		--run.pggb)        RUN_PGGB="$2"; shift 2 ;;
-		--run.odgi)        RUN_ODGI="$2"; shift 2 ;;
-		--cpus)            CPUS="$2"; shift 2 ;;
-		--mem)             MEM="$2"; shift 2 ;;
-		--time)            WALLTIME="$2"; shift 2 ;;
-		--help)            usage ;;
-		*)                 log "Error: Unknown option $1"; usage ;;
+		--pipelineDir)  PIPELINE_DIR="$2"; shift 2 ;;
+		--projectROOT)  PROJECT_ROOT="$2"; shift 2 ;;
+		--pangenomeDir) PANGENOME_DIR="$2"; shift 2 ;;
+		--reference)    REF_NAME="$2"; shift 2 ;;
+		--run.cactus)   RUN_CACTUS="$2"; shift 2 ;;
+		--run.pggb)     RUN_PGGB="$2"; shift 2 ;;
+		--run.odgi)     RUN_ODGI="$2"; shift 2 ;;
+		*) echo "Error: Unknown option $1"; exit 1 ;;
 	esac
 done
 
-is_true() {
-	local val="${1^^}"
-	[[ "$val" == "TRUE" || "$val" == "YES" || "$val" == "1" ]]
-}
-
-if [[ -z "$PREP_DIR" || ! -d "$PREP_DIR" ]]; then
-	log "Error: Valid --pangenomeDir is required."
-	usage
+if [[ -f "${PIPELINE_DIR}/env.bashrc" ]]; then
+	source "${PIPELINE_DIR}/env.bashrc"
 fi
 
-PREP_DIR=$(readlink -f "$PREP_DIR")
-ASSEMBLY_DIR="${PREP_DIR}/assemblies"
-PANGENOME_OUT="${PREP_DIR}/pangenome_build"
-mkdir -p "${PANGENOME_OUT}"
+PROJECT_ROOT=$(readlink -f "$PROJECT_ROOT")
 
-log "========================================================================"
-log "Initiating Pangenome Construction Pipeline..."
-log "Assembly Source:       ${ASSEMBLY_DIR}"
-log "Backbone Reference:    ${REF_GENOME}"
-log "Build Directory:       ${PANGENOME_OUT}"
-log "Cactus Container SIF:  ${CACTUS_SIF}"
-log "Micromamba Env:        ${MICROMAMBA_ENV}"
-log "PGGB Segment Length:   ${SEGMENT_LEN} bp"
-log "PGGB Map Identity:     ${MAP_PCT}%"
-log "========================================================================"
+# Determine absolute path for PANGENOME_DIR
+if [[ "$PANGENOME_DIR" = /* ]]; then
+	PREP_DIR="$PANGENOME_DIR"
+else
+	PREP_DIR="${PROJECT_ROOT}/${PANGENOME_DIR}"
+fi
 
-ASSEMBLIES=(${ASSEMBLY_DIR}/*.fasta)
-if [[ ${#ASSEMBLIES[@]} -eq 0 || ! -f "${ASSEMBLIES[0]}" ]]; then
-	log "Error: No FASTA assemblies found in ${ASSEMBLY_DIR}"
+ASM_DIR="${PREP_DIR}/assemblies"
+PUBLIC_REF_DIR="${PREP_DIR}/public_refs"
+BUILD_DIR="${PREP_DIR}/pangenome_build"
+PANSN_DIR="${BUILD_DIR}/pansn_genomes"
+CACTUS_DIR="${BUILD_DIR}/minigraph_cactus"
+PGGB_DIR="${BUILD_DIR}/pggb"
+
+mkdir -p "${PANSN_DIR}" "${CACTUS_DIR}" "${PGGB_DIR}"
+
+echo "----------------------------------------------------------------"
+echo "Starting Pangenome Preparation Workflow..."
+echo "Project Root:    ${PROJECT_ROOT}"
+echo "Prep Directory:  ${PREP_DIR}"
+echo "Build Directory: ${BUILD_DIR}"
+echo "Reference Tag:   ${REF_NAME}"
+date
+echo "----------------------------------------------------------------"
+
+# 2. Format PanSN Headers & Concatenate Assemblies
+COMBINED_FASTA="${BUILD_DIR}/all_assemblies.pansn.fa"
+SEQFILE="${CACTUS_DIR}/pangenome.seqfile"
+
+> "${COMBINED_FASTA}"
+> "${SEQFILE}"
+
+echo "Formatting FASTA headers to PanSN spec..."
+
+shopt -s nullglob
+assembly_files=("${ASM_DIR}"/*.fasta "${ASM_DIR}"/*.fa "${PUBLIC_REF_DIR}"/*.fasta "${PUBLIC_REF_DIR}"/*.fa "${PUBLIC_REF_DIR}"/*.fna)
+shopt -u nullglob
+
+if [[ ${#assembly_files[@]} -eq 0 ]]; then
+	echo "Error: No FASTA files found in ${ASM_DIR} or ${PUBLIC_REF_DIR}"
 	exit 1
 fi
 
-NUM_ASMS=${#ASSEMBLIES[@]}
-log "Total input assemblies detected: ${NUM_ASMS}"
+for asm_path in "${assembly_files[@]}"; do
+	filename=$(basename "$asm_path")
+	sample_tag="${filename%.*}"
+	clean_tag="${sample_tag//./_}"
+	pansn_out="${PANSN_DIR}/${sample_tag}.pansn.fa"
 
-# ----------------------------------------------------------------------------------------------- #
-# Step 1: PanSN FASTA Header Formatting
-# ----------------------------------------------------------------------------------------------- #
-PANSN_DIR="${PANGENOME_OUT}/pansn_genomes"
-mkdir -p "${PANSN_DIR}"
+	echo "  -> Processing: ${filename} as sample ID: ${clean_tag}"
 
-log "Formatting FASTA headers to PanSN specifications (Sample#1#Contig)..."
-PANSN_FASTAS=()
-
-for fa in "${ASSEMBLIES[@]}"; do
-	base=$(basename "$fa" .fasta)
-	sample_name="${base//./_}"
-	
-	pansn_fa="${PANSN_DIR}/${base}.pansn.fa"
-	log "  [PanSN Format] ${base} -> ${sample_name}#1#..."
-	
-	awk -v prefix="${sample_name}#1#" '/^>/{print ">" prefix substr($1,2); next} {print}' "$fa" > "$pansn_fa"
-	PANSN_FASTAS+=("$pansn_fa")
+	awk -v sample="${clean_tag}" '/^>/{print ">" sample "#" ++i; next} {print}' "$asm_path" > "$pansn_out"
+	cat "$pansn_out" >> "${COMBINED_FASTA}"
+	echo -e "${clean_tag}\t${pansn_out}" >> "${SEQFILE}"
 done
 
-COMBINED_FA="${PANGENOME_OUT}/all_assemblies.pansn.fa"
-log "Concatenating all PanSN sequences into ${COMBINED_FA}..."
-cat "${PANSN_FASTAS[@]}" > "$COMBINED_FA"
+echo "Combined PanSN FASTA: ${COMBINED_FASTA}"
+echo "Cactus Seqfile:       ${SEQFILE}"
 
-if ! grep -q ">${REF_GENOME}#1#" "$COMBINED_FA"; then
-	log "Error: Reference tag '${REF_GENOME}' was not found in formatted PanSN sequences."
-	log "Available sample tags:"
-	grep -oP '^>[^#]+' "$COMBINED_FA" | sort -u | tr -d '>'
-	exit 1
-fi
 
-# ----------------------------------------------------------------------------------------------- #
-# Step 2: Minigraph-Cactus Pangenome Pipeline (Singularity Container)
-# ----------------------------------------------------------------------------------------------- #
-if is_true "$RUN_CACTUS"; then
-	CACTUS_DIR="${PANGENOME_OUT}/minigraph_cactus"
-	mkdir -p "${CACTUS_DIR}"
-	
-	SEQFILE="${CACTUS_DIR}/pangenome.seqfile"
-	rm -f "$SEQFILE"
-	
-	for fa in "${PANSN_FASTAS[@]}"; do
-		base=$(basename "$fa" .pansn.fa)
-		sample_name="${base//./_}"
-		echo -e "${sample_name}\t${fa}" >> "$SEQFILE"
-	done
-
-	CACTUS_SB="${CACTUS_DIR}/run_cactus.sb"
-	log "Writing Minigraph-Cactus SLURM script to ${CACTUS_SB}..."
-	
-	cat <<EOT > "$CACTUS_SB"
-#!/bin/bash --login
-#SBATCH --job-name=cactus-pangenome
+# 3. Write Minigraph-Cactus SLURM Script
+cat << 'EOF' > "${CACTUS_DIR}/run_cactus.sb"
+#!/bin/bash -l
+#SBATCH --job-name=cactus_pangenome
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=${CPUS}
-#SBATCH --mem=${MEM}
-#SBATCH --time=${WALLTIME}
-#SBATCH --output=${CACTUS_DIR}/cactus-%j.out
-
-set -e
-set -x
-
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Starting Minigraph-Cactus run on \$(hostname)..."
-cd ${CACTUS_DIR}
-
-if [[ -f "${ENV_BASHRC}" ]]; then
-	source "${ENV_BASHRC}"
-fi
-
-SCRATCH_DIR="/mnt/gs21/scratch/\${USER}/tmp_cactus_\${SLURM_JOB_ID}"
-JOBSTORE_PATH="\${SCRATCH_DIR}/jobstore"
-mkdir -p "\$SCRATCH_DIR" "\$JOBSTORE_PATH"
-
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Executing Cactus-Pangenome Singularity Container..."
-singularity exec --cleanenv -B /mnt/research,/mnt/gs21,"\${SCRATCH_DIR}" "${CACTUS_SIF}" \\
-    cactus-pangenome \\
-    "\$JOBSTORE_PATH" \\
-    ${SEQFILE} \\
-    --outDir ${CACTUS_DIR}/output \\
-    --outName pig_pangenome \\
-    --reference ${REF_GENOME} \\
-    --batchSystem single_machine \\
-    --binariesMode local \\
-    --consCores \${SLURM_CPUS_PER_TASK} \\
-    --chrom-og full
-
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Cleaning scratch jobstore space..."
-rm -rf "\$SCRATCH_DIR"
-
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Minigraph-Cactus execution completed successfully."
-EOT
-
-	log "Submitting Minigraph-Cactus SLURM job..."
-	sbatch "$CACTUS_SB"
-fi
-
-# ----------------------------------------------------------------------------------------------- #
-# Step 3: PGGB Pangenome Pipeline (Micromamba Environment)
-# ----------------------------------------------------------------------------------------------- #
-if is_true "$RUN_PGGB"; then
-	PGGB_DIR="${PANGENOME_OUT}/pggb"
-	mkdir -p "${PGGB_DIR}"
-
-	PGGB_SB="${PGGB_DIR}/run_pggb.sb"
-	log "Writing PGGB SLURM script to ${PGGB_SB}..."
-	
-	cat <<EOT > "$PGGB_SB"
-#!/bin/bash --login
-#SBATCH --job-name=pggb-pangenome
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=${CPUS}
-#SBATCH --mem=${MEM}
-#SBATCH --time=${WALLTIME}
-#SBATCH --output=${PGGB_DIR}/pggb-%j.out
-
-set -e
-set -x
-
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Starting PGGB run on \$(hostname)..."
-cd ${PGGB_DIR}
-
-if [[ -f "${ENV_BASHRC}" ]]; then
-	source "${ENV_BASHRC}"
-fi
-
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Activating Micromamba environment: ${MICROMAMBA_ENV}..."
-eval "\$(micromamba shell hook --shell bash)"
-micromamba activate ${MICROMAMBA_ENV}
-
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Indexing combined PanSN FASTA..."
-samtools faidx ${COMBINED_FA}
-
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Executing PGGB graph builder..."
-pggb -i ${COMBINED_FA} \\
-	-s ${SEGMENT_LEN} \\
-	-p ${MAP_PCT} \\
-	-n ${NUM_ASMS} \\
-	-t ${CPUS} \\
-	-V '${REF_GENOME}:0' \\
-	-o ${PGGB_DIR}/output
-
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] PGGB execution completed successfully."
-EOT
-
-	log "Submitting PGGB SLURM job..."
-	sbatch "$PGGB_SB"
-fi
-
-# ----------------------------------------------------------------------------------------------- #
-# Step 4: ODGI Visualizations (Micromamba Environment)
-# ----------------------------------------------------------------------------------------------- #
-if is_true "$RUN_ODGI"; then
-	VIZ_DIR="${PANGENOME_OUT}/odgi_visualizations"
-	mkdir -p "${VIZ_DIR}"
-
-	ODGI_SB="${VIZ_DIR}/run_odgi_viz.sb"
-	log "Writing ODGI visualization SLURM script to ${ODGI_SB}..."
-	
-	cat <<EOT > "$ODGI_SB"
-#!/bin/bash --login
-#SBATCH --job-name=odgi-viz
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=${CPUS}
+#SBATCH --cpus-per-task=64
 #SBATCH --mem=250G
-#SBATCH --time=24:00:00
-#SBATCH --output=${VIZ_DIR}/odgi-viz-%j.out
+#SBATCH --time=48:00:00
+#SBATCH --output=cactus-%j.out
+#SBATCH --error=cactus-%j.err
 
-set -e
-set -x
+set -euo pipefail
 
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Starting ODGI Visualizations on \$(hostname)..."
-cd ${VIZ_DIR}
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Minigraph-Cactus run on $(hostname)..."
 
-if [[ -f "${ENV_BASHRC}" ]]; then
-	source "${ENV_BASHRC}"
+CACTUS_DIR="${SLURM_SUBMIT_DIR:-$PWD}"
+PIPELINE_DIR="$(cd "${CACTUS_DIR}/../../.." && pwd)"
+
+if [[ -f "${PIPELINE_DIR}/env.bashrc" ]]; then
+	source "${PIPELINE_DIR}/env.bashrc"
 fi
 
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Activating Micromamba environment: ${MICROMAMBA_ENV}..."
-eval "\$(micromamba shell hook --shell bash)"
-micromamba activate ${MICROMAMBA_ENV}
+WORK_DIR="${SLURM_TMPDIR:-/mnt/gs21/scratch/ackers24/tmp}/cactus_${SLURM_JOB_ID}"
+JOBSTORE_PATH="${WORK_DIR}/jobstore"
 
-CHROM_DIR="${PANGENOME_OUT}/minigraph_cactus/output/pig_pangenome.chroms"
+mkdir -p "${WORK_DIR}"
+trap 'rm -rf "${WORK_DIR}"' EXIT
 
-if [[ -d "\$CHROM_DIR" ]]; then
-	for og in \${CHROM_DIR}/*.og; do
-		base=\$(basename "\$og" .og)
-		
-		echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Rendering 1D Scan for \${base}..."
-		odgi viz -i "\$og" -o "\${base}_1D_scan.png" -z -P -x 5000 -y 1000
+SEQFILE="${CACTUS_DIR}/pangenome.seqfile"
+OUT_DIR="${CACTUS_DIR}/output"
+mkdir -p "${OUT_DIR}"
 
-		echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Sorting graph \${base}..."
-		odgi sort -i "\$og" -o "\${base}_sorted.og" -O -p b
+REF_SAMPLE="REF_HxYL_ncbi_hap2"
 
-		echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Calculating 2D Layout for \${base}..."
-		odgi layout -i "\${base}_sorted.og" -o "\${base}.lay" -t ${CPUS}
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Executing Cactus-Pangenome Container..."
 
-		echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Drawing 2D Layout PNG for \${base}..."
-		odgi draw -i "\${base}_sorted.og" -c "\${base}.lay" -p "\${base}_2D_layout.png" -C -b 1000 -w 30 -S 1
-	done
-else
-	echo "[\$(date '+%Y-%m-%d %H:%M:%S')] Warning: Cactus chromosome directory \${CHROM_DIR} not found yet."
+singularity exec --cleanenv \
+	-B /mnt/research,/mnt/gs21,"${WORK_DIR}":"${WORK_DIR}","${CACTUS_DIR}":"${CACTUS_DIR}" \
+	"${CACTUS_SOFTWARE:-/mnt/research/qgg/software/cactus/cactus_v3.1.4.sif}" \
+	cactus-pangenome \
+		"${JOBSTORE_PATH}" \
+		"${SEQFILE}" \
+		--outDir "${OUT_DIR}" \
+		--outName pig_pangenome \
+		--reference "${REF_SAMPLE}" \
+		--batchSystem single_machine \
+		--binariesMode local \
+		--consCores "${SLURM_CPUS_PER_TASK:-64}" \
+		--chrom-og full
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Minigraph-Cactus complete!"
+EOF
+
+chmod +x "${CACTUS_DIR}/run_cactus.sb"
+
+
+# 4. Write PGGB SLURM Script
+cat << 'EOF' > "${PGGB_DIR}/run_pggb.sb"
+#!/bin/bash -l
+#SBATCH --job-name=pggb_pangenome
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=64
+#SBATCH --mem=250G
+#SBATCH --time=48:00:00
+#SBATCH --output=pggb-%j.out
+#SBATCH --error=pggb-%j.err
+
+set -euo pipefail
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting PGGB run on $(hostname)..."
+
+PGGB_BUILD_DIR="${SLURM_SUBMIT_DIR:-$PWD}"
+BUILD_DIR="$(cd "${PGGB_BUILD_DIR}/.." && pwd)"
+COMBINED_FASTA="${BUILD_DIR}/all_assemblies.pansn.fa"
+OUT_DIR="${PGGB_BUILD_DIR}/output"
+mkdir -p "${OUT_DIR}"
+
+if command -v micromamba &>/dev/null; then
+	eval "$(micromamba shell hook --shell bash)"
+	micromamba activate pggb
 fi
 
-echo "[\$(date '+%Y-%m-%d %H:%M:%S')] ODGI Visualizations completed successfully."
-EOT
-
-	log "Submitting ODGI visualization SLURM job..."
-	sbatch "$ODGI_SB"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Indexing combined PanSN FASTA..."
+if [[ ! -f "${COMBINED_FASTA}.fai" ]]; then
+	samtools faidx "${COMBINED_FASTA}"
 fi
 
-log "========================================================================"
-log "All pangenome construction jobs successfully dispatched."
-log "========================================================================"
+pggb \
+	-i "${COMBINED_FASTA}" \
+	-o "${OUT_DIR}" \
+	-t "${SLURM_CPUS_PER_TASK:-64}" \
+	-p 98 \
+	-s 5000 \
+	-n 13 \
+	-V 'REF_HxYL_ncbi_hap2:#:'
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] PGGB run complete!"
+EOF
+
+chmod +x "${PGGB_DIR}/run_pggb.sb"
+
+
+# 5. Conditionally Dispatch SLURM Jobs
+RUN_CACTUS_UPPER=$(echo "$RUN_CACTUS" | tr '[:lower:]' '[:upper:]')
+RUN_PGGB_UPPER=$(echo "$RUN_PGGB" | tr '[:lower:]' '[:upper:]')
+
+if [[ "$RUN_CACTUS_UPPER" == "TRUE" || "$RUN_CACTUS_UPPER" == "YES" ]]; then
+	echo "Submitting Minigraph-Cactus SLURM job..."
+	(cd "${CACTUS_DIR}" && sbatch run_cactus.sb)
+fi
+
+if [[ "$RUN_PGGB_UPPER" == "TRUE" || "$RUN_PGGB_UPPER" == "YES" ]]; then
+	echo "Submitting PGGB SLURM job..."
+	(cd "${PGGB_DIR}" && sbatch run_pggb.sb)
+fi
+
+echo "----------------------------------------------------------------"
+echo "Pangenome execution pipeline complete!"
+date
+echo "----------------------------------------------------------------"

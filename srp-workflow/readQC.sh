@@ -260,6 +260,7 @@ done
 # 4. Run MultiQC
 # ----------------------------------------------------------------------------------------------- #
 echo "Generating MultiQC Report..."
+cd "$QC_OUT"
 echo "+ ${MULTIQC_SOFTWARE}/multiqc $FASTQC_OUT -o $QC_OUT --filename MultiQC_Report"
 "${MULTIQC_SOFTWARE}/multiqc" "$FASTQC_OUT" -o "$QC_OUT" --filename "MultiQC_Report"
 echo "MultiQC complete. Review your report at: ${PROJECT_ROOT}/dataQC/MultiQC_Report.html"

@@ -52,6 +52,7 @@ export LOAD_PARAMS_CONFIG="NO"
 # Verkko 2.3.2: 		micromamba create -n verkkov2.3.2 -c conda-forge -c bioconda -c defaults verkko
 # HiFiasm: 				micromamba create -n hifiasm -c conda-forge -c bioconda hifiasm
 # PGGB:					micromamba create -n pggb -c conda-forge -c bioconda pggb
+#						micromamba install -n pggb -c bioconda samtools -y
 # ----------------------------------------------------------------------------------------------- #
 
 
