@@ -104,8 +104,8 @@ cat << 'EOF' > "${CACTUS_DIR}/run_cactus.sb"
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
-#SBATCH --mem=250G
-#SBATCH --time=48:00:00
+#SBATCH --mem=1000G
+#SBATCH --time=167:00:00
 #SBATCH --output=cactus-%j.out
 #SBATCH --error=cactus-%j.err
 
@@ -161,8 +161,8 @@ cat << 'EOF' > "${PGGB_DIR}/run_pggb.sb"
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
-#SBATCH --mem=250G
-#SBATCH --time=48:00:00
+#SBATCH --mem=1000G
+#SBATCH --time=167:00:00
 #SBATCH --output=pggb-%j.out
 #SBATCH --error=pggb-%j.err
 

@@ -245,7 +245,7 @@ ${SRP_WORKFLOW}/prepangenome.sh --srpDirs "SRP1,SRP2,SRP3,SRP4,SRP5,SRP6,SRP9,SR
 
 # UPDATE FIRST
 cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
-${SRP_WORKFLOW}/pangenome.sh --pangenomeDir pangenome_prep --run.cactus TRUE --run.pggb TRUE --run.odgi FALSE &> ${PWD}/pangenome.log
+${SRP_WORKFLOW}/pangenome.sh --pangenomeDir pangenome_prep --run.cactus TRUE --run.pggb FALSE --run.odgi FALSE &> ${PWD}/pangenome.log
 
 
 
