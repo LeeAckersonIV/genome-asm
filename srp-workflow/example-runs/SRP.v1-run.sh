@@ -198,8 +198,8 @@ ${SRP_WORKFLOW}/assembly.sh --projectROOT ${PWD}/SRP4 --load.project.params YES 
 # Run SRP5
 ${SRP_WORKFLOW}/assembly.sh --projectROOT ${PWD}/SRP5 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --run.verkko FALSE &> ${PWD}/SRP5/assembly.log
 
-# Run SRP6
-${SRP_WORKFLOW}/assembly.sh --projectROOT ${PWD}/SRP6 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --run.verkko FALSE &> ${PWD}/SRP6/assembly.log
+# Run SRP6 {Currently Halted for Truncated File}
+# ${SRP_WORKFLOW}/assembly.sh --projectROOT ${PWD}/SRP6 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --run.verkko FALSE &> ${PWD}/SRP6/assembly.log
 
 # Run SRP9
 ${SRP_WORKFLOW}/assembly.sh --projectROOT ${PWD}/SRP9 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --run.verkko FALSE &> ${PWD}/SRP9/assembly.log
