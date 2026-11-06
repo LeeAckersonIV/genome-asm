@@ -225,8 +225,8 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP4 --load.project.par
 # Run SRP5
 ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP5 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --eval.verkko FALSE &> ${PWD}/SRP5/assembly-metrics.log
 
-# Run SRP6
-${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP6 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --eval.verkko FALSE &> ${PWD}/SRP6/assembly-metrics.log
+# Run SRP6; filter.sh issue
+#${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP6 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --eval.verkko FALSE &> ${PWD}/SRP6/assembly-metrics.log
 
 # Run SRP9
 ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP9 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --eval.verkko FALSE &> ${PWD}/SRP9/assembly-metrics.log
@@ -238,14 +238,14 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP11 --load.project.pa
 # ==================================================== Stage 4 for SRP 1,2,3,4,5,6,9,11 ==================================================== #
 
 cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
-
-${SRP_WORKFLOW}/prepangenome.sh --srpDirs "SRP1,SRP2,SRP3,SRP4,SRP5,SRP6,SRP9,SRP11" --outdir ${PWD}/SRP.v1-pangenome
+# SRP6, tmp missing
+${SRP_WORKFLOW}/prepangenome.sh --srpDirs "SRP1,SRP2,SRP3,SRP4,SRP5,SRP9,SRP11" --outdir ${PWD}/SRP.v1-pangenome
 
 # ==================================================== Stage 5 for SRP 1,2,3,4,5,6,9,11 ==================================================== #
 
 # UPDATE FIRST
 cd /mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1
-${SRP_WORKFLOW}/pangenome.sh --pangenomeDir pangenome_prep --run.cactus TRUE --run.pggb FALSE --run.odgi FALSE &> ${PWD}/pangenome.log
+${SRP_WORKFLOW}/pangenome.sh --pangenomeDir ${PWD}/SRP.v1-pangenome --run.cactus TRUE --run.pggb FALSE --run.odgi FALSE &> ${PWD}/pangenome.log
 
 
 

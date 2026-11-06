@@ -297,22 +297,23 @@ if [[ ! -f "$REF_HXYL" ]]; then
     wget -O "$REF_HXYL" https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/054/392/235/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0/GCA_054392235.2_Sscrofa_HxYL_maternal_Yorkshire_Landrace_v2.0_genomic.fna.gz
 fi
 
-# Download BUSCO lineage database (cetartiodactyla_odb10)
+# Download BUSCO lineage database (cetartiodactyla_odb10) with concurrency lock
 BUSCO_DOWNLOAD_DIR="${PIPELINE_DIR}/references/busco_downloads"
 LINEAGE_NAME="cetartiodactyla_odb10"
 LINEAGE_DIR="${BUSCO_DOWNLOAD_DIR}/lineages/${LINEAGE_NAME}"
+LOCKFILE="${BUSCO_DOWNLOAD_DIR}/.busco_download.lock"
 
-if [[ ! -d "$LINEAGE_DIR" ]]; then
-    echo "Pre-downloading BUSCO lineage dataset: ${LINEAGE_NAME}..."
-    mkdir -p "${BUSCO_DOWNLOAD_DIR}/lineages"
-    BUSCO_TAR="${BUSCO_DOWNLOAD_DIR}/lineages/${LINEAGE_NAME}.tar.gz"
+mkdir -p "${BUSCO_DOWNLOAD_DIR}/lineages"
 
-    wget --tries=5 --waitretry=5 -O "$BUSCO_TAR" \
-        "https://busco-data.ezlab.org/v5/data/lineages/cetartiodactyla_odb10.2024-01-08.tar.gz"
-
-    tar -xzf "$BUSCO_TAR" -C "${BUSCO_DOWNLOAD_DIR}/lineages/"
-    rm -f "$BUSCO_TAR"
-fi
+# Use flock to prevent race conditions when running multiple scripts at once
+(
+    flock -x 200
+    if [[ ! -d "$LINEAGE_DIR" ]]; then
+        echo "[SETUP] Pre-downloading BUSCO lineage dataset: ${LINEAGE_NAME}..."
+        wget -qO- "https://busco-data.ezlab.org/v5/data/lineages/cetartiodactyla_odb10.2024-01-08.tar.gz" | tar -xz -C "${BUSCO_DOWNLOAD_DIR}/lineages/"
+        echo "[SETUP] BUSCO dataset successfully installed."
+    fi
+) 200>"$LOCKFILE"
 # ----------------------------------------------------------------------------------------------- #
 
 
@@ -465,8 +466,8 @@ run_merqury_qv() {
 	sbatch --job-name="qv-${out_prefix}" \
 		--chdir="$out_dir" \
 		--cpus-per-task=16 \
-		--mem=64G \
-		--time=6:00:00 \
+		--mem=128G \
+		--time=16:00:00 \
 		--output="${out_dir}/merqury.log" \
 		--wrap="
 			unset SLURM_SUBMIT_DIR

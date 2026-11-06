@@ -10,6 +10,8 @@
 ### 4. filter.sh
 ### 5. assembly.sh
 ### 6. assembly-metrics.sh
+### 7. prepangenome.sh
+### 8. pangenome.sh
 
 ---
 
