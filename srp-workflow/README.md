@@ -94,10 +94,8 @@ tail -f filter.log
 # Run assembly.sh
 ${SRP_WORKFLOW}/assembly.sh --projectROOT ${PWD}/SRP1 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --run.verkko FALSE &> ${PWD}/SRP1/assembly.log
 
-
 # Run assembly-metrics.sh
 ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP1 --load.project.params YES --hifiasm.outdir.name hifiasm_trio --eval.verkko FALSE &> ${PWD}/SRP1/assembly-metrics.log
-
 
 # Run prepangenome.sh
 ${SRP_WORKFLOW}/prepangenome.sh --srpDirs "SRP1" --outdir ${PWD}/SRP.v1-pangenome
