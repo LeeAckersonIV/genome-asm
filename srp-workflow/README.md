@@ -93,18 +93,18 @@ tail -f filter.log
 
 # Run assembly.sh
 ${SRP_WORKFLOW}/assembly.sh --projectROOT ${PWD}/SRP1 --load.project.params YES \
-	--hifiasm.outdir.name hifiasm_trio --run.verkko FALSE &> ${PWD}/SRP1/assembly.log
+--hifiasm.outdir.name hifiasm_trio --run.verkko FALSE &> ${PWD}/SRP1/assembly.log
 
 # Run assembly-metrics.sh
 ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP1 --load.project.params YES \
-	--hifiasm.outdir.name hifiasm_trio --eval.verkko FALSE &> ${PWD}/SRP1/assembly-metrics.log
+--hifiasm.outdir.name hifiasm_trio --eval.verkko FALSE &> ${PWD}/SRP1/assembly-metrics.log
 
 # Run prepangenome.sh
 ${SRP_WORKFLOW}/prepangenome.sh --srpDirs "SRP1" --outdir ${PWD}/SRP.v1-pangenome
 
 # Run assembly-metrics.sh
 ${SRP_WORKFLOW}/pangenome.sh --pangenomeDir ${PWD}/SRP.v1-pangenome --run.cactus TRUE \
-	--run.pggb FALSE --run.odgi FALSE &> ${PWD}/pangenome.log
+--run.pggb FALSE --run.odgi FALSE &> ${PWD}/pangenome.log
 
 
 
