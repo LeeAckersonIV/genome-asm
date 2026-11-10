@@ -1,0 +1,114 @@
+#!/bin/bash
+#SBATCH --job-name=mstn_pipeline
+#SBATCH --output=mstn_pipe-%j.out
+#SBATCH --error=mstn_pipe-%j.err
+#SBATCH --time=01:00:00
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=128G
+
+WORKDIR="/mnt/gs21/scratch/ackers24/srp-sandbox/SRP.v1/SRP.v1-pangenome/pangenome_build/minigraph_cactus"
+CACTUS_SIF="/mnt/research/qgg/software/cactus/cactus_v3.1.4.sif"
+
+cd "${WORKDIR}"
+
+sing_exec() {
+    singularity exec --cleanenv \
+        -B /mnt/research,/mnt/gs21,"${WORKDIR}":"${WORKDIR}" \
+        "${CACTUS_SIF}" "$@"
+}
+
+echo "=== Step 1: Extracting MSTN SV Overlaps ==="
+python3 << 'EOF'
+import pandas as pd
+
+bed_file = "output/svs_cds_intersect_detailed.bed"
+mstn_records = []
+
+with open(bed_file, "r") as f:
+    for line in f:
+        if "MSTN" in line or "399534" in line:
+            parts = line.strip().split("\t")
+            mstn_records.append({
+                "SV_Chr": parts[0],
+                "SV_Start": int(parts[1]),
+                "SV_End": int(parts[2]),
+                "SV_Type": parts[3],
+                "SV_Len_bp": int(parts[4]),
+                "CDS_Start": int(parts[6]),
+                "CDS_End": int(parts[7]),
+                "Gene_Symbol": "MSTN",
+                "NCBI_GeneID": 399534
+            })
+
+df_mstn = pd.DataFrame(mstn_records).drop_duplicates()
+print("[*] MSTN Overlaps Identified:")
+print(df_mstn.to_string(index=False))
+df_mstn.to_csv("output/mstn_sv_overlaps.tsv", sep="\t", index=False)
+EOF
+
+echo "=== Step 2: Resolving Reference Path & Relative Offsets ==="
+
+# 1. Search for primary reference assembly path or first contiguous Chr 15 path
+TARGET_PATH=$(sing_exec odgi paths -i output/pig_pangenome.sorted.og -L | grep -E "#15#[0-9]+\[[0-9]+-[0-9]+\]" | head -n 1)
+
+if [ -z "${TARGET_PATH}" ]; then
+    TARGET_PATH=$(sing_exec odgi paths -i output/pig_pangenome.sorted.og -L | grep -E "#(chr)?15#" | head -n 1)
+fi
+
+echo "[*] Selected Graph Path: ${TARGET_PATH}"
+
+# 2. Parse bracketed path offset [Start-End] and calculate relative coordinates in Python
+python3 -c "
+import re
+import pandas as pd
+
+path_name = '${TARGET_PATH}'
+df = pd.read_csv('output/mstn_sv_overlaps.tsv', sep='\t')
+
+cds_min = max(0, df['CDS_Start'].min() - 10000)
+cds_max = df['CDS_End'].max() + 10000
+
+# Extract start offset inside bracket if present: e.g. [3242907-144022471]
+match = re.search(r'\[(\d+)-(\d+)\]', path_name)
+if match:
+    path_start_offset = int(match.group(1))
+    rel_start = max(0, cds_min - path_start_offset)
+    rel_end = cds_max - path_start_offset
+else:
+    rel_start = cds_min
+    rel_end = cds_max
+
+with open('output/mstn_target_region.bed', 'w') as f:
+    f.write(f'{path_name}\t{rel_start}\t{rel_end}\n')
+
+print(f'[*] Absolute CDS Coordinates: {cds_min:,} - {cds_max:,}')
+print(f'[*] Relative Path Offsets:   {rel_start:,} - {rel_end:,}')
+"
+
+echo "=== Step 3: Subgraph Extraction & Visual Layout ==="
+
+# Extract MSTN subgraph using target BED file
+sing_exec odgi extract \
+    -i output/pig_pangenome.sorted.og \
+    -b output/mstn_target_region.bed \
+    -t 8 \
+    -o output/mstn_locus.og
+
+# Convert extracted subgraph to GFA for Bandage
+sing_exec odgi view -i output/mstn_locus.og -g > output/mstn_locus.gfa
+
+# Render 1D path layout visualization PNG
+sing_exec odgi viz \
+    -i output/mstn_locus.og \
+    -o output/mstn_locus_viz.png \
+    -x 1800 \
+    -y 60 \
+    -a 10 \
+    -t 8 \
+    -P
+
+echo "=== Completed Successfully ==="
+echo "  1. Overlap Table: output/mstn_sv_overlaps.tsv"
+echo "  2. Target BED:    output/mstn_target_region.bed"
+echo "  3. Bandage GFA:   output/mstn_locus.gfa"
+echo "  4. Layout PNG:    output/mstn_locus_viz.png"
