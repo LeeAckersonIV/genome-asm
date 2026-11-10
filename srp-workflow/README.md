@@ -3,19 +3,9 @@
 ## 🔄 Data Flow & Pipeline Architecture
 
 ![SRP Workflow Architecture](./dataFlowDiagram.jpg)
-
-### 1. initialize.sh
-### 2. readQC.sh
-### 3. kmers.sh
-### 4. filter.sh
-### 5. assembly.sh
-### 6. assembly-metrics.sh
-### 7. prepangenome.sh
-### 8. pangenome.sh
-
 ---
 
-## 📁 Repository Structure
+## 📁 Repository & Procedure Structure
 
 ```text
 srp-workflow/
