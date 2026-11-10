@@ -19,18 +19,29 @@
 
 ```text
 srp-workflow/
-├── env.bashrc                 # Global environment configurations & tool paths
-├── initialize.sh              # Project workspace initializer & params.config builder
-├── readQC.sh                  # Raw/cleaned data FastQC, SeqKit stats, and MultiQC
-├── density_plot.py            # Python script for read length/quality joint density plots
-├── filter.sh                  # Trimming & quality filtering (Chopper) for HiFi reads
-├── kmers.sh                   # K-mer counting (Meryl & Yak), GenomeScope2, & Merqury hapmers
-├── assembly.sh                # Trio assembly orchestrator (HiFiasm & Verkko)
-├── launch_hifiasm_trio.sh     # SLURM launcher wrapper for HiFiasm Trio
-├── launch_verkko_trio.sh      # SLURM launcher wrapper for Verkko Trio
-├── assembly-metrics.sh        # Post-assembly evaluation orchestrator
-├── N50.sh                     # QUAST contiguity & N50 analysis wrapper
-└── BUSCO.sh                   # Lineage gene completeness wrapper
+├── env.bashrc                             # Global environment configurations & executable software paths (adjust to your user & system)
+├── references/                            # Reference genomes & sequence sets (larger files fetched dynamically downstream)
+│   ├── pig_MT.fasta                       # Porcine mitochondrial genome reference for filtering
+│   └── pig_rDNA.fasta                     # Porcine ribosomal DNA unit reference for repeat masking
+├── initialize.sh                          # Step 1:	Project workspace initializer & params.config builder
+├── readQC.sh                              # Step 2a:	Raw/cleaned data FastQC, SeqKit stats, and MultiQC
+│   └── density_plot.py                    # Python script for read length/quality joint density plots
+├── filter.sh                              # Step 2b:	Trimming & quality filtering (Chopper) for HiFi & ONT reads
+├── kmers.sh                               # Step 2c:	K-mer counting (Meryl & Yak), GenomeScope2, & Merqury hapmers
+├── assembly.sh                            # Step 3:	Trio assembly orchestrator (HiFiasm & Verkko)
+│   ├── launch_hifiasm_trio.sh             # SLURM launcher wrapper for HiFiasm Trio
+│   └── launch_verkko_trio.sh              # SLURM launcher wrapper for Verkko Trio
+├── assembly-metrics.sh                    # Step 4:	Post-assembly evaluation orchestrator (QV, BUSCO, N50, T2T stats)
+│   ├── N50.sh                             # QUAST contiguity & N50 analysis wrapper
+│   └── BUSCO.sh                           # Lineage gene completeness wrapper
+├── prepangenome.sh                        # Step 5:	Haplotype FASTA formatting, header renaming, & prepangenome environment configuration
+├── pangenome.sh                           # Step 6:	Pangenome graph construction (Minigraph-Cactus / PGGB), fetch pig public T2T genomes
+└── tool-scripts/                          # Directory housing tool scripts & post-pangenome analysis examples
+    ├── plot_variant_histo.py              # Python script for plotting SV length/size frequency distributions
+    ├── post_cactus_analysis.sh            # Pipeline for VCF decomposition, SV annotation, and graph queries
+    ├── run_MSTN_pipeline.sb               # SLURM batch job script for ODGI subgraph extraction & 1D visual rendering
+    ├── sv_coding_analysis.sh              # Intersects structural variants against exon/CDS coordinate features
+    └── sv_gene_impact.sh                  # Evaluates gene disruption categories and functional impact scores
 ```
 ---
 
