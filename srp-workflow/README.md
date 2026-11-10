@@ -102,7 +102,7 @@ ${SRP_WORKFLOW}/assembly-metrics.sh --projectROOT ${PWD}/SRP1 --load.project.par
 # Run prepangenome.sh
 ${SRP_WORKFLOW}/prepangenome.sh --srpDirs "SRP1" --outdir ${PWD}/SRP.v1-pangenome
 
-# Run assembly-metrics.sh
+# Run pangenome.sh
 ${SRP_WORKFLOW}/pangenome.sh --pangenomeDir ${PWD}/SRP.v1-pangenome --run.cactus TRUE \
     --run.pggb FALSE --run.odgi FALSE &> ${PWD}/pangenome.log
 
